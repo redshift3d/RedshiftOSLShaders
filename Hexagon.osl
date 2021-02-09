@@ -1,0 +1,63 @@
+/*
+ * Hexagon.osl by Michel J. Anders (c)2012
+ * from https://github.com/sambler/osl-shaders
+ *
+ * license: cc-by-sa
+ *
+ * original script from -
+ * http://blenderthings.blogspot.co.uk/2012/11/a-hexagon-osl-shader.html
+ * Modified 1/4/2020 by Saul Espinosa for Redshift 3D
+ */
+
+
+#define A 0.86602540378443864676372317075294 // sqrt(3)/2
+#define A2 (2*A)
+#define A4 (4*A)
+#define SY (1/A)
+
+shader MAhexagon(
+        vector Vector = 0,
+        color Diffuse_Color1 = color(0.2, 0.8, 0.2),
+        color Diffuse_Color2 = color(0.8, 0.2, 0.2),
+        color Diffuse_Color3 = color(0.2, 0.2, 0.8),
+        output color Color = 0,
+        output int Index = 1,
+        output float Distance = 0)
+{
+    // calculate the color
+
+    color colors[3] = {Diffuse_Color1,
+                       Diffuse_Color2,
+                       Diffuse_Color3};
+
+    // we warp the grid so that two adjacent equilateral triangles
+    // are mapped to two triangles that fit in a square
+    float syc = Vector[1] * SY;
+    float sxc = Vector[0] + 0.5 * syc;
+
+    int ind[18] = {1,1,3,3,3,1, 2,2,2,3,3,3, 1,2,2,2,1,1};
+
+    int iy = int(mod(syc,3.0));
+    int ix = int(mod(sxc,3.0));
+    ix = iy * 6 + ix * 2 + ( mod(sxc,1.0) > mod(syc,1.0) );
+    Index = ind[ix];
+    Color = colors[Index-1];
+
+    // calculate the distance to the center of the hexagon
+
+    float sx = mod(Vector[0],3);
+    float sy = mod(Vector[1]+0.75,A4);
+
+    // map everthing to a single quadrant
+    if ( sx > 1.5 ) sx = 3 - sx;
+    if ( sy > A2 ) sy = A4 - sy;
+
+    // the distance were interested in is the distance to
+    // the *closest* center point
+    float d1 = distance(vector(sx,sy,0),vector(1.5,A2,0));
+    float d2 = distance(vector(sx,sy,0),vector(0,A,0));
+    float d6 = distance(vector(sx,sy,0),vector(1.5,0,0));
+
+    Distance = min(min(d1,d2), d6);
+
+}

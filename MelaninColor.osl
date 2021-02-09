@@ -1,0 +1,18 @@
+// Melanin Color Generator OSL node based on Weta's Melanin research paper.
+// This was made for Redshift 3D, by Saul Espinosa v.2.0 - Added Melanin Redness 2/3/2021
+// outColor should be input into the Transmission, Internal Reflection inputs of the rsHair and Diffuse if used.
+
+shader MelaninColor
+(
+float melanin = 0.5 [[float min = 0, float max = 1, string label = "Melanin"]],
+color dyeColor = 1 [[string label = "Dye Color"]],
+float redness = 0 [[float min = 0, float max = 1, string label = "Melanin Redness"]],
+float dyeMix = 0 [[float min = 0, float max = 1, string label = "Dye Mix"]],
+	output color outColor = 0
+)
+{
+float w = max( pow(melanin, 2.0) * 33.0, 0.02);
+	color pheomelanin = exp(w * -vector(0.187, 0.4, 1.05));
+	color eumelanin = exp(w * -vector(0.419, 0.697, 1.37));
+		outColor = mix(mix(eumelanin, pheomelanin, redness), dyeColor, dyeMix);
+}

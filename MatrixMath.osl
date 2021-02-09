@@ -1,0 +1,16 @@
+//Matrix Math Node by Saul Espinosa for Redshift
+
+shader enums
+(
+    matrix input = matrix(1, 1, 1, 1,
+1, 1, 1, 1,
+1, 1, 1, 1,
+1, 1, 1, 1),
+
+
+    output color outColor = 1
+    [[ string label = "Out Color" ]]
+)
+{
+    outColor = 1;
+}

@@ -1,0 +1,56 @@
+// An UVW coordinate tranfrormation tool
+// UVWTransform.osl by Zap Andersson
+// Modified: 2019-11-27
+// Copyright 2019 Autodesk Inc, All rights reserved. This file is licensed under Apache 2.0 license
+//    https://github.com/ADN-DevTech/3dsMax-OSL-Shaders/blob/master/LICENSE.txt
+// Modified by Saul Espinosa for Redshift Renderer 2020-12-28
+
+shader UVWTransform
+[[ string help  =
+                "UVW Transformation shader. Can scale,<br>"
+                "tile and rotate UVW coordinates.",
+   string label = "UVW Transform",
+   string category = "UVW Coordinates",
+   string version  = "2.0" ]]
+(
+        point  uvw = point(u, v, 0)
+                [[ string label = "Input (UVW)",
+                   string help="Connect your UVW generator here, for example <b>UVW Channel</b> or <b>UVW Object Space</b>.<br/>"
+                               "If not connected, the default UV channel (Map Channel 1) is used" ]],
+        float  Scale = 1.0
+                [[
+        string help="The overall Scale. Larger number = bigger." ,
+        float min = 0, float max = 25
+        ]],
+        vector Tiling = 1.0
+                [[ string help="A per-axis dividing scale, to subdivide the values. Larger number = smaller." ]],
+        vector Offset = 0.0
+                [[ string help="Moves the UVW coordinates around" ]],
+        int    Wrap   = 0
+                [[ string widget = "checkBox",
+                   int connectable = 0,
+                   string help   = "Wrap the resulting coordinates in a 0-1 range" ]],
+
+        float  Rotate = 0.0
+                [[
+        string help="A rotation angle in <i>degrees</i>." ,
+        float min = -180, float max = 180
+        ]],
+        point  RotCenter = point(0.5,0.5,0)
+                [[ string label = "Rotation Center",
+                   string help  = "The center of rotation in UVW space" ]],
+        vector RotAxis   = vector(0.0,0.0,1.0)
+                [[ string label = "Rotation Axis",
+                   string help  = "An axis around which the rotation occurs." ]],
+
+        output point UVW = 0
+)
+{
+        vector worldScale = 1.0;
+        point Input = select(vector(u,v,0), uvw, isconnected(uvw));
+
+        UVW = rotate(Input - Offset, radians(Rotate), RotCenter, RotCenter + RotAxis) * Tiling / worldScale / Scale;
+
+        if (Wrap)
+                UVW -= floor(UVW);
+}

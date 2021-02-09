@@ -1,0 +1,39 @@
+//Tooled Steel by Ivan DeWolf
+// Modified by Saul Espinosa for Redshift
+
+vector nearPtLine(
+    point testLoc,
+    point lineStart,
+    point lineEnd)
+{
+    float lineMag = distance(lineStart, lineEnd);
+    float U = dot(testLoc-lineStart, lineEnd - lineStart) / (lineMag * lineMag);
+    return lineStart + U * (lineEnd - lineStart);
+}
+
+shader tooldSteel(
+    color attenColor = color(0.9,0.8,0.7),
+    float xalph = 1
+	        [[
+                float min =  0,
+                float max = 1
+			]],
+    float yalph = .1
+		    [[
+                float min =  0,
+                float max = 1
+			]],
+    float cellmult = 10
+			[[
+                float min =  0,
+                float max = 100
+			]],
+    point Ploc = P,
+    vector Normal = N,
+    output closure color Metal = 0.0)
+{
+    vector centerLoc = round(Ploc * cellmult)/cellmult;
+    vector spinCenter = nearPtLine(Ploc, centerLoc+Normal, centerLoc -Normal);
+    vector anisoDir = normalize(spinCenter-Ploc);
+    Metal = attenColor * microfacet("ggx", Normal, anisoDir, xalph, yalph, 15, 0);
+}

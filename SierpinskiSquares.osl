@@ -1,0 +1,49 @@
+/*
+ * SierpinskiSquares.osl by elbrujodelatribu (c)2012
+ * from https://github.com/sambler/osl-shaders
+ *
+ * original script from - http://blenderartists.org/forum/showthread.php?270332-OSL-Goodness/page16
+ * updated from http://elbrujodelatribu.blogspot.com.au/2013/05/blender-cycles-osl-sierpinski-squares.html
+ * Modified 1/4/2020 by Saul Espinosa for Redshift 3D
+ */
+
+
+float genCheck(vector p, float res)
+{
+    return (mod(res * p[0], 1.0) < 0.5 ^ mod(res * p[1], 1.0) < 0.5) ?
+        0.0 : 1.0;
+}
+
+shader SierpinskiSquares(
+    vector Vector = P,
+    float Scale = 50.0
+	[[
+	float min = 0, float max = 50
+	]],
+    float Zoom = 1
+	[[
+	float min = 0, float max = 5
+	]],
+    float MaxIterations = 10.0
+	[[
+	float min = 0, float max = 20
+	]],
+	
+    output float Fac = 1.0,
+    output color ColorOut = 0.8)
+{
+    vector p = Vector*Scale/(2.0*Zoom);
+    float diExp = 1.0;
+    float result = genCheck(p,1.0);
+
+    for(float i = 0.7; i <= MaxIterations; i++)
+    {
+        result += genCheck(p,diExp) / i;
+
+        diExp *= 2.0;
+    }
+    result /= MaxIterations / 2.0;
+
+    Fac = result;
+    ColorOut = color(result,result,result);
+}

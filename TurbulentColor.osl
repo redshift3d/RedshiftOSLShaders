@@ -1,0 +1,41 @@
+/*
+ * TurbulentColor.osl by elbrujodelatribu (c)2013
+ * from https://github.com/sambler/osl-shaders
+ *
+ * original script from -
+ * http://elbrujodelatribu.blogspot.com.au/2013/05/blender-cycles-osl-color-turbulence.html
+ * based on work from
+ * http://glsl.heroku.com/e#8664.0
+ *
+ */
+
+
+shader TurbulentColor(
+    vector Vector = P,
+    float Scale = 5
+	[[
+	float min = 0, float max = 25
+	]],
+    float Time = 1.0
+	[[
+	float min = 0, float max = 100
+	]],
+    int MaxIterations = 64
+	[[
+	int min = 1, int max = 100
+	]],
+	
+    output color Color = 0.8)
+{
+    vector p = Vector * Scale;//surfacePosition;
+
+    for(int i=1; i < MaxIterations; i++)
+    {
+        vector newp = p;
+        newp[0]+=0.6/float(i)*sin(float(i)*p[1]+Time/20.0+0.3*float(i))+20.0;
+        newp[1]+=0.6/float(i)*sin(float(i)*p[0]+Time/20.0+0.3*float(i+10))-5.0;
+        p=newp;
+    }
+
+    Color = color(sin(Time+p[1]+p[0]-M_PI*color(0,2,4)/(4.0+sin(Time)))*0.3+0.5);
+}

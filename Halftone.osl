@@ -1,0 +1,56 @@
+// A simple Halftone shader
+// Halftone.osl, by Zap Andersson
+// Modified: 2019-11-25
+// Modified: 202-1-11 by Saul Espinosa for Redshift 3D
+// Copyright 2019 Autodesk Inc, All rights reserved. This file is licensed under Apache 2.0 license
+//    https://github.com/ADN-DevTech/3dsMax-OSL-Shaders/blob/master/LICENSE.txt
+
+shader HalftoneDots
+	[[ string help="Halftone Dots (by default i screen space)<br>"
+	               "Works well together with toon shaders.",
+       string category = "Textures",
+       string label = "Halftone Dots" ]] 
+(
+	// Inputs
+	vector UVW   = transform("raster", P)
+		[[ string help = "The input coordinate. If not connected, uses screen pixel space" ]],
+	vector Scale = vector(8.0,8.0,8.0)
+		[[ string help = "This size of the dots. In the default screen space mapping, this is in pixels." ]],
+	float  Angle = 45.0
+		[[ string help = "Angle of the Halftoning" ,
+		float min = -180, float max = 180
+		]],	
+	color  InputValue = 0.25
+		[[ string help = "The input value defining the size of the dots to yield the right halftone density. " ]],	
+	int  U_Input = 0
+		[[ string help = "If checked, adds the U coordinate as the input value. This works "
+		                 "well when connected in a 'base_tonemap' input of an Arnold Toon shader.",
+		   string widget = "checkBox" ]],		
+	float  Fuzz = 0.1 [[ float min = 0.0, float max = 2.0 ]],
+	color  BlackDots = 0.0
+		[[ string help = "The color of the dots" ]],		
+	color  WhiteDots = 1.0
+		[[ string help = "The color of the space between the dots" ]],		
+	// Outputs
+	output color Out = 0.0
+)
+{
+	vector pos = rotate(UVW, radians(Angle), 0.0, vector(0.0,0.0,1.0));
+	pos = vector(pos[0] / Scale[0], pos[1] / Scale[1], 0.0);
+	if (Scale[0] == 0.0)
+		pos[0] = 0.5;
+	if (Scale[1] == 0.0)
+		pos[1] = 0.5;
+
+	color inputV = InputValue;
+	
+	if (U_Input)
+		inputV += u;	
+				
+	pos = pos - floor(pos);
+	
+	float dist = 1.0 - (distance(vector(0.5,0.5,0.0), pos) / (sqrt(2.0) / 2.5));	
+	color factor = smoothstep(-Fuzz, 0.0, inputV - sqrt(max(0,dist)));
+		
+	Out = mix(BlackDots, WhiteDots, factor);
+}

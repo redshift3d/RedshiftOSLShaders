@@ -1,0 +1,112 @@
+// Making a simple Weave, can be used for carbon fiber, cloth, or similar
+// Weave.osl, by Zap Andersson
+// Modified: 2018-12-06
+// Copyright 2018 Autodesk Inc, All rights reserved. This file is licensed under Apache 2.0 license
+//    https://github.com/ADN-DevTech/3dsMax-OSL-Shaders/blob/master/LICENSE.txt
+
+shader Weave
+	[[ string help="<font size=+1><b>Weave</b></font><br>A simple threaded weave shader. Can be used for everything from cloth to carbon fiber.", 
+	   string URL ="https://github.com/ADN-DevTech/3dsMax-OSL-Shaders" ]]
+(
+	point UVW = point(u,v,0),
+	float Scale = 0.2,
+	// Inputs
+	color U_Color = 0.2 [[ string label = "U Color"]],
+	color V_Color = 0.5 [[ string label = "V Color"]],
+	
+	float Width       = 0.5
+		[[ float min = 0.0, float max = 1.0 ]],	
+	float Roundness   = 1.0
+		[[ float min = 0.0, float max = 1.0 ]],
+	float RoundnessBump = 1.0
+		[[ float min = 0.0, float max = 2.0 ]],	
+	float RoundShadow   = 0.5
+		[[ float min = 0.0, float max = 1.0 ]],
+	float WeaveBump = 0.5
+		[[ float min = 0.0, float max = 2.0 ]],	
+	float WeaveShadow = 0.4
+		[[ float min = 0.0, float max = 1.0 ]],	
+	float Frizz       = 0.0
+		[[ float min = 0.0, float max = 1.0 ]],	
+	float FrizzBump   = 0.0
+		[[ float min = 0.0, float max = 2.0 ]],	
+	float FrizzScale  = 0.1,
+	float Bendyness       = 0.2
+		[[ float min = 0.0, float max = 1.0 ]],	
+	float BendynessScale  = 3.0,
+	float OpacityFade     = 0.0
+		[[ float min = 0.0, float max = 1.0 ]],	
+	
+
+	// Outputs
+	output color Col = 0.0,	
+ 	output float Bump = 0.5,
+ 	output int   ThreadID = 0,
+ 	output float Opacity = 0.0,
+)
+{
+	// Compute the scaled point
+	point uvw = UVW / Scale;
+	
+	// Add frizz to the width
+	float frizz = noise("perlin", uvw / FrizzScale) ;
+	float w2  = Width + frizz * Frizz;
+	float w   = w2 * 0.5;
+	
+	int uf = int(floor(uvw[0]));
+	int vf = int(floor(uvw[1]));	
+	
+	// Compute an independent per-thread randomness for bending it
+	float ubend = noise("perlin", uvw[1] / BendynessScale + uf) * Bendyness;
+	float vbend = noise("perlin", uvw[0] / BendynessScale + vf) * Bendyness;
+	
+	// Compute the thread coordinates
+	float sx = uvw[0] - uf + ubend;
+	float sy = uvw[1] - vf + vbend;
+	
+	int onU = (sy > 0.5 - w && sy < 0.5 + w);
+	int onV = (sx > 0.5 - w && sx < 0.5 + w);
+	
+	float uu = (sy - (0.5 - w)) / w2;
+	float vv = (sx - (0.5 - w)) / w2;
+	
+	// Odd or even U / V ?
+	int oddU = uf % 2;
+	int oddV = vf % 2;
+
+	// Are we on neither thread? Just return	
+	if (onU == 0 && onV == 0) return;
+	
+	int U_on_top = (oddU ^ oddV) == 0;		
+
+	// Both - disambiguate
+	if (onU && onV)
+	{
+		onU = U_on_top;
+		onV = onU == 0;
+	}	
+	
+	// Return a random ID for each thread
+	ThreadID = 1 + int((cellnoise(uf) * onV + cellnoise(vf) * onU) * 1024.0) + onU;
+
+	// Which color to return?	
+	if (onU)
+		Col = U_Color;
+	else
+		Col = V_Color;
+
+	// Compute the bump and fake "Shadowing"
+	float r = Roundness; 	
+	float weave = (onU) ? sin((uvw[0] + oddV) * M_PI) : sin((uvw[1] + oddU + 1.0) * M_PI);
+	
+	float ubulge = sin(uu * M_PI);
+	float vbulge = sin(vv * M_PI);
+	
+	float bulge = pow((onU ? ubulge : vbulge), r);	
+	
+	Opacity = max(pow(ubulge, OpacityFade), pow(vbulge, OpacityFade));
+	
+	Bump = 0.2	 + weave * WeaveBump + bulge * RoundnessBump + frizz * FrizzBump;	
+	Col *= mix(1.0, bulge, RoundShadow);
+	Col *= mix(1.0, weave, WeaveShadow);	
+}

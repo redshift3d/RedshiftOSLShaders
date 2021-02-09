@@ -1,0 +1,64 @@
+// Found this on GLSL sandbox. I really liked it, changed a few things and made it tileable.
+// by David Hoskins.
+// Water turbulence effect by joltz0r 2013-07-04, improved 2013-07-07
+// Updated 1/4/2020 by Saul Espinosa for Redshift 3D
+
+// Redefine below to see the tiling...
+//#define SHOW_TILING
+
+#define TAU 6.28318530718
+
+
+shader FakeCaustics( 
+
+	point Po = P,
+	float Time = 0
+	[[
+	float min = 0, float max = 100
+	]],
+	int iterations = 5
+	[[
+	int min = 0, int max = 20
+	]],
+	output color Out = 0,
+  
+    ) 
+{
+	float tt = Time * .5+23.0;
+    // uv should be the 0-1 uv of texture...
+	vector uv = Po;
+    
+	vector p = mod(uv*TAU*2.0, TAU)-250.0;
+
+    // vector p = mod(uv*TAU, TAU)-250.0;
+
+	vector i = vector(p);
+	float c = 1.0;
+	float inten = .005;
+
+	for (int n = 0; n < iterations; n++) 
+	{
+		float t = tt * (1.0 - (3.5 / float(n+1)));
+		i = p + vector(cos(t - i[0]) + sin(t + i[1]), sin(t - i[1]) + cos(t + i[0]),0);
+		c += 1.0/length(vector(p[0] / (sin(i[0]+t)/inten),p[1] / (cos(i[1]+t)/inten),0));
+	}
+	c /= float(iterations);
+	c = 1.17-pow(c, 1.4);
+	vector colour = vector(pow(abs(c), 8.0));
+    colour = clamp(colour + vector(0.0, 0.35, 0.5), 0.0, 1.0);
+    
+/*
+	#ifdef SHOW_TILING
+	// Flash tile borders...
+	vec2 pixel = 2.0 / iResolution.xy;
+	uv *= 2.0;
+
+	float f = floor(mod(iTime*.5, 2.0)); 	// Flash value.
+	vec2 first = step(pixel, uv) * f;		   	// Rule out first screen pixels and flash.
+	uv  = step(fract(uv), pixel);				// Add one line of pixels per tile.
+	colour = mix(colour, vec3(1.0, 1.0, 0.0), (uv.x + uv.y) * first.x * first.y); // Yellow line
+	
+*/
+	Out = vector(colour);
+	Out = pow(Out,2.2);
+}

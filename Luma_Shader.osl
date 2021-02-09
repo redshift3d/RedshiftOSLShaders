@@ -1,0 +1,76 @@
+// Adrian Cruceru
+// Redshift Rendering Technologies 2020
+// luma
+shader Luma
+[[  string help = "computes the relative luminance = luma of an input in various formats",
+    string label = "Luma/Relative Luminance" ]]
+(
+    // inputs
+    color inColor = 0
+    [[string label = "In Color"]],
+    // various modes to compute the relative Luminance
+    int mode = 0
+    [[  string label = "Mode",
+        string widget = "mapper",
+        string options = "Rec. 709 (HD):0|Rec. 2020 (4k):1|Ccir 601 (SD):2|Average:3|Red:4|Green:5|Blue:6"]],
+    float gamma = 2.2
+    [[  string label = "Gamma",
+        float min = 0, float max = 3 ]],
+    int preGamma = 1
+    [[  string widget = "checkBox",
+        string label = "Pre Gamma" ]],
+    int postGamma = 1
+    [[  string widget = "checkBox" ,
+        string label = "Post Gamma" ]],
+    // outputs
+    output color outColor = 1
+    [[  string label = "Out Color" ]]
+)
+{
+    // define various luma standards
+    vector rec709   = {0.2126,  0.7152, 0.0722};
+    vector rec2020  = {0.2627,  0.678,  0.0593};
+    vector ccir601  = {0.299,   0.587,  0.114};
+    float R = preGamma*pow(inColor[0],1/gamma)+(1-preGamma)*inColor[0];
+    float G = preGamma*pow(inColor[1],1/gamma)+(1-preGamma)*inColor[1];
+    float B = preGamma*pow(inColor[2],1/gamma)+(1-preGamma)*inColor[2];
+    
+    if (mode == 0)
+    {
+        // internally the luminance function is using REC709
+        // outColor = luminance(inColor);
+        color C = rec709[0]*R +rec709[1]*G+rec709[2]*B;
+        color powC = pow(C,gamma);
+        outColor = postGamma*powC+(1-postGamma)*C;
+    }
+    else if (mode == 1)
+    {
+        color C = rec2020[0]*R+rec2020[1]*G+rec2020[2]*B;
+        color powC = pow(C,gamma);
+        outColor = postGamma*powC+(1-postGamma)*C;
+    }
+    else if (mode == 2)
+    {
+        color C = ccir601[0]*R+ccir601[1]*G+ccir601[2]*B;
+        color powC = pow(C,gamma);
+        outColor = postGamma*powC+(1-postGamma)*C;
+    }
+    else if (mode == 3)
+    {
+        color C = (R+G+B)/3;
+        color powC = pow(C,gamma);
+        outColor = postGamma*powC+(1-postGamma)*C;
+    }
+    else if (mode == 4)
+    {
+        outColor = postGamma*pow(R,gamma)+(1-postGamma)*R;
+    }
+    else if (mode == 5)
+    {
+        outColor = postGamma*pow(G,gamma)+(1-postGamma)*G;
+    }
+    else if (mode == 6)
+    {
+        outColor = postGamma*pow(B,gamma)+(1-postGamma)*B;
+    }
+}

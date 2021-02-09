@@ -1,0 +1,26 @@
+// Slope Mask Shader by Saul Espinosa for Redshift
+
+shader SlopeMask
+(
+        float Power  = 4.0
+        [[
+                float min =0.03,
+                float max = 100
+        ]],
+        float Slope = 0.5
+        [[
+                float min =  0.0,
+                float max = 0.9999999
+        ]],
+        int Direction = 1
+        [[
+                string widget = "mapper",
+                string options = "X:0|Y:1|Z:2",
+                int min =  0,
+                int max = 2
+        ]],
+        output color Out = 1.0
+)
+{
+        Out = pow((N[Direction] - Slope) / .5, 1.0 / Power);
+}

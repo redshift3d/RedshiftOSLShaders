@@ -1,0 +1,100 @@
+// Non-Tiling Texture Shader
+// TextureNoTile.osl, by Zap Andersson
+// Modified: 2020-03-28
+// Copyright 2020 Autodesk Inc, All rights reserved. This file is licensed under Apache 2.0 license
+// https://github.com/ADN-DevTech/3dsMax-OSL-Shaders/blob/master/LICENSE.txt
+// Modified by Saul Espinosa for Redshift OSL Support 2020-12-28
+
+float sum( color col ) { return col[0]+col[1]+col[2]; }
+
+
+color textureNoTile( string FileName, point UV, float GradientScale, float Offset, float Rescale, float Rotate, int LevelCount, int Debug, int Seed )
+{
+    float k = noise("uperlin", UV / GradientScale, Seed);
+    float l = k*LevelCount + UV[1] / GradientScale;
+    float i = floor( l );
+    float f = l - i;
+    vector offa = cellnoise(i + 0.0, Seed) * vector(Offset, Offset, 1.0);
+    vector offb = cellnoise(i + 1.0, Seed) * vector(Offset, Offset, 1.0);
+    float  sca = 1.0 / (1.0 + (offa[2] - 0.5) * Rescale);
+    float  scb = 1.0 / (1.0 + (offb[2] - 0.5) * Rescale);
+
+    float  rota = offa[2] * Rotate;
+    float  rotb = offb[2] * Rotate;
+
+    point rotA = rotate(UV, rota, vector(0.5,0.5,0), vector(0.5,0.5,1.0));
+    point rotB = rotate(UV, rotb, vector(0.5,0.5,0), vector(0.5,0.5,1.0));
+
+    color cola = texture(FileName, rotA[0] * sca + offa[0], 1.0 - (rotA[1] * sca + offa[1]), "wrap", "periodic" );
+    color colb = texture(FileName, rotB[0] * scb + offb[0], 1.0 - (rotB[1] * scb + offb[1]), "wrap", "periodic" );
+
+    if (Debug)
+    {
+        cola = offa;
+        colb = offb;
+    }
+
+    return mix( cola, colb, smoothstep(0.1,0.9,f-0.1*sum(cola-colb)) );
+}
+
+shader NoTile
+[[ string help  = "Non-Tiling Bitmap Lookup, based on an OpenGL Technique",
+   string label = "Non-Tiling Bitmap Lookup",
+   string URL   = "http://www.iquilezles.org/www/articles/texturerepetition/texturerepetition.htm" ]]
+(
+        point  uvw   = point(u,v,0)
+                [[  string label= "UV Coordinate",
+                        string help = "The 2D coordiante at which the texture is looked up." ]],
+        string Filename = "" [[ string widget="filename" ]],
+        float  GradientScale = 2.0
+            [[  float min = 0,
+                float max = 25
+            ]],
+        float  Offset = 1.0
+            [[  float min = 0,
+                float max = 25
+            ]],
+        float  Rescale = 0.0
+            [[  float min = 0,
+                float max = 25
+            ]],
+        float  Rotate  = 0.0
+            [[  float min = -180,
+                float max = 180
+            ]],
+        int    LevelCount = 8
+            [[  int min = 0,
+                int max = 25
+            ]],
+        int    Seed = 0
+            [[  int min = 0,
+                int max = 100
+            ]],
+        int    Debug   = 0
+                [[  string widget = "checkBox",
+                        string help = "Shows the regions that are being mixed" ]],
+        int    Bypass = 0
+                [[  string widget = "checkBox",
+                        string help = "Turns the effect off, to compare" ]],
+        float  ManualGamma = 2.2
+                [[ string label="Manual Gamma" ]],
+
+        output color Col = 0
+)
+{
+        int s = Seed;
+
+
+        point Pos = select(vector(u,v,0), uvw, isconnected(uvw));
+
+        if (Bypass)
+                Col = texture(Filename, Pos[0], 1.0 - Pos[1], "wrap", "periodic");
+        else
+                Col = textureNoTile( Filename, Pos, GradientScale, Offset, Rescale, Rotate, LevelCount, Debug, s );
+
+        // Temporary workaround for color space issues
+        {
+                if (ManualGamma != 1.0)
+                        Col = pow(Col, ManualGamma);
+        }
+}

@@ -1,0 +1,51 @@
+shader Matcap(
+    string fileName="" [[string label="Texture", string widget="filename"]],
+    float gamma=2.2 [[string label="Gamma", float slidercenter=2.2, float min=0.1, float max=10]],
+    int mapSpace=0 [[string label="Space",
+                    string widget="mapper",
+                    string options="Screen:0|Camera:1|World:2"]],
+    float scale=1 [[string label="Scale",
+                    string page="Transform",
+                    int slider=1,
+                    int digits=3,
+                    float slidermin=0,
+                    float slidermax=2]],
+    float scaleU=1 [[string label="Scale U",
+                    string page="Transform",
+                    int slider=1,
+                    int digits=3,
+                    float slidermin=0,
+                    float slidermax=2]],
+    float scaleV=1 [[string label="Scale V",
+                    string page="Transform",
+                    int slider=1,
+                    int digits=3,
+                    float slidermin=0,
+                    float slidermax=2]],
+    float rot=0 [[string label="Rotation",
+                    string page="Transform",
+                    int slider=1,
+                    int digits=5,
+                    float slidermin=0,
+                    float slidermax=360,
+                    string units="degrees"]],
+    output color outColor=0
+)
+{
+    float rsin = 0;
+    float rcos = 1;
+    sincos(radians(rot), rsin, rcos);
+    vector svec = max(vector(scale*scaleU,scale*scaleV,1), vector(0.001));
+    normal uvOut = transform("camera", N);
+    if(mapSpace==2) uvOut = N;
+    uvOut = vector(uvOut.x * rcos - uvOut.y * rsin, uvOut.x * rsin + uvOut.y * rcos, uvOut.z);
+    if(mapSpace==0){
+        normal v = transform("camera", I);
+        uvOut = normalize(vector(dot(vector(-v.z,v.y,v.x), -uvOut), dot(vector(v.x,-v.z,v.y), -uvOut), dot(v, uvOut)));
+    }
+
+    uvOut = (uvOut/svec + 1.0) / 2.0;
+
+    color Cout = texture(fileName, uvOut.x, -uvOut.y);
+    outColor = pow(Cout, gamma);
+}

@@ -1,0 +1,60 @@
+/*
+ * StarField.osl by Thomas Dinges
+ * from https://github.com/sambler/osl-shaders
+ * 
+ * original script from -
+ * http://www.renderman.org/RMR/RMRShaders.html
+ *
+ * Starfield.sl -- Surface shader for a star field.
+ *
+ * DESCRIPTION:
+ *   Makes a star field.  Best when used as a surface shader for the inside
+ *   of a large sphere.
+ * 
+ * PARAMETERS:
+ *   frequency          frequency of the stars
+ *   intensity          how bright are the stars?
+ *   Width            how wide is the point spread function?  i.e. larger
+ *                      values make "wider" stars, but the look less round.
+ *
+ * AUTHOR: written by Larry Gritz, 1992
+ *
+ * HISTORY:
+ *      28 Dec 1992 -- written by lg for the "Timbre Trees" video (saucer)
+ *      12 Jan 1994 -- recoded by lg in correct shading language.
+ *
+ * modified  12 Jan 1994 by Larry Gritz
+ * converted to OSL bu Thomas Dinges Dec 2012
+ * modified 1/4/2020 by Saul Espinosa for Redshift
+ */
+
+shader LGStarField(
+        float Intensity = 0.5
+			[[
+			float min = 0,
+			float max = 100
+			]],
+        float Frequency = 100.0
+			[[
+			float min = 0,
+			float max = 500
+			]],
+        float Width = 0.2
+			[[
+			float min = 0,
+			float max = 1
+			]],
+			
+        output float Fac = 1.0 )
+{
+  point PP;
+  float val;
+
+  PP = Frequency * P;
+
+  /* Use a noise value, but only keep the "tips" of the blotches */
+  val = smoothstep (1 - Width, 1, noise(PP));
+
+  /* scale it by the intensity and sharpen it by squaring */
+  Fac = Intensity * val*val;
+}

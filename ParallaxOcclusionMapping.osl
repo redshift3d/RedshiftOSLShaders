@@ -1,0 +1,135 @@
+/*
+Version: 001
+A Parallax Occlusion Mapping Shader based on the OpenGL tutorial by Joey de Vries (www.learnopengl.com /  https://twitter.com/JoeyDeVriez); permission for usage obtained.
+Translation to OSL written by Martin Geupel, www.racoon-artworks.de, 09/04/2018
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software (the "Software"), to use,
+copy, and/or distribute the software, subject to the following conditions:
+- The above copyright notice and this permission notice shall be included in all copies of the Software.
+- You may not misrepresent the name of the Original Author or the name of the Software.
+- You can distribute the Software only free of charge, you may not sell and/or rent the Software.
+- You may add functionality and/or modify existent functionaly if it is clearly indicated and noted in this Header.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
+WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+*/
+
+
+shader ParallaxOcclusionMapping
+    [[ string help="Parallax Occlusion Mapping Shader" ]]
+(
+    // Inputs
+    string heightTexMap = ""
+        [[ string label = "Heightmap",
+        string help = "Texture map depth",
+        string widget = "filename" ]],
+    float gamma = 1
+        [[ string label = "Gamma",
+        string widget = "number",
+        float min = 0.01,
+        float max = 10]],
+    int invertHeightMap = 0
+        [[ string label = "Invert Heightmap",
+        string widget= "checkBox",
+        string help = "Deep values should be black, high values should be white"]],
+    point uvwIn = vector(u,v,0)
+        [[ string label = "UVW Coords",
+        string help = "UVW Coordinates"]],
+    normal tangentIn = vector(0)
+        [[ string label = "Tangent Coords",
+        string help = "Tangent Coordinates"]],
+    float depth_mult = 1.0
+        [[ string label = "Depth Scale",
+        string help = "Depth Multiplier",
+        float min = 0,
+        float max = 100]],
+    int minLayers = 1
+        [[ string label = "Min Samples",
+        string help = "Minimum Samples",
+        int min = 1,
+        int max = 64]],
+    int maxLayers = 8
+        [[ string label = "Max Samples",
+        string help = "Maximum Samples",
+        int min = 1,
+        int max = 64]],
+    string WrapMode = "periodic"
+        [[ string widget="popup", string options = "default|black|clamp|periodic|mirror",
+        string label="Wrap Mode",
+        string help="How the height texture wraps: (black, clamp, periodic or mirror)." ]],
+    int deactivate = 0
+        [[ string label = "Bypass",
+        string widget= "checkBox",
+        string help = "Deactivate this checkbox to turn off any depth effects (node does nothing)"]],
+
+    output vector uvwOut = 1
+    [[ string label = "UVW"]],
+)
+{
+    if (deactivate == 1) uvwOut = 0;
+    else {
+
+        // step 1
+        float height_scale = depth_mult / 100.0;
+        normal norml = Ng;
+        normal tangent = select(normalize(dPdu), tangentIn, isconnected(tangentIn));
+        normal bitangent = cross(tangent, norml);
+        point uvw = select(point(u,v,0), uvwIn, isconnected(uvwIn));
+
+        matrix tangentspace = 1.0/matrix("world", tangent[0], tangent[1], tangent[2], 0.0,
+                                bitangent[0], bitangent[1], bitangent[2], 0.0,
+                                norml[0], norml[1], norml[2], 0.0,
+                                0.0, 0.0, 0.0, 1.0) ;
+
+        normal worldSpaceViewDir = transform("world", normal(-I));
+        normal tangViewDir = normalize(transform(tangentspace, normal(worldSpaceViewDir)));
+
+
+        // step 2
+        float numLayers = min(512, depth_mult * mix(float(maxLayers), float(minLayers), pow(abs(dot(vector(0.0, 0.0, 1.0), tangViewDir)),2)));
+        float layerDepth = 1.0 / numLayers;
+        float currentLayerDepth = 0.0;
+
+        vector p = tangViewDir * height_scale;
+        vector deltaTexCoords = p / numLayers;
+
+        vector currentTexCoords = uvw;
+        color depthTex = texture(heightTexMap, currentTexCoords[0], 1.0 - currentTexCoords[1], "wrap", WrapMode);
+        float currentDepthMapValue;
+        if (invertHeightMap == 1) currentDepthMapValue = pow(depthTex[0], 1/gamma);
+        else currentDepthMapValue = 1.0 - pow(depthTex[0], 1/gamma);
+
+
+        while (currentLayerDepth < currentDepthMapValue) {
+            currentTexCoords -= deltaTexCoords; // shift texture coordinates
+            color InnerdepthTex = texture(heightTexMap, currentTexCoords[0], 1.0 - currentTexCoords[1],  "wrap", WrapMode);  // get depthmap value at current texture coordinates
+            if (invertHeightMap == 1) currentDepthMapValue = pow(InnerdepthTex[0], 1/gamma);
+            else currentDepthMapValue = 1.0 - pow(InnerdepthTex[0], 1/gamma);
+
+            currentLayerDepth += layerDepth; // get depth of next layer
+        }
+
+
+        // step 3
+        vector prevTexCoords = currentTexCoords + deltaTexCoords; // get texture coordinates before collision (reverse operations)
+
+        // get depth after and before collision for linear interpolation
+        float afterDepth  = currentDepthMapValue - currentLayerDepth;
+        color depthMapBefore = texture(heightTexMap, prevTexCoords[0], 1.0 - prevTexCoords[1],  "wrap", WrapMode);
+        float depthMapBeforeValue;
+        if (invertHeightMap == 1) depthMapBeforeValue = pow(depthMapBefore[0], 1/gamma);
+        else depthMapBeforeValue = 1.0 - pow(depthMapBefore[0], 1/gamma);
+        float beforeDepth = depthMapBeforeValue - currentLayerDepth + layerDepth;
+
+        // interpolation of texture coordinates
+        float weight = afterDepth / (afterDepth - beforeDepth);
+        vector finalTexCoords = prevTexCoords * weight + currentTexCoords * (1.0 - weight);
+
+
+        uvwOut = finalTexCoords - uvw;
+
+    }
+
+}

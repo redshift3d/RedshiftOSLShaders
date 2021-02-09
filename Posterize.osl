@@ -1,0 +1,44 @@
+/*
+ * Posterise.osl by Charlie (c)2012
+ * from https://github.com/sambler/osl-shaders
+ *
+ * license: public domain
+ *
+ * original script from -
+ * http://blenderartists.org/forum/showthread.php?270332-OSL-Goodness/page5
+ * Modified 1/4/2020 by Saul Espinosa for Redshift 3D
+ */
+
+
+shader posterise(
+    int Range = 8
+	[[
+	int min = 0, int max = 50
+	]],
+    color Color = 1
+	[[
+	string label = "Input"
+	]],
+	
+    output color Output = 0 )
+{
+
+    float posterise(float Value){
+        if( Range > 1 ) {
+        return floor(Value * Range) / (Range-1);
+    }
+    else if(Range == 1) {
+         return 0;
+    }
+    else  {
+        return Value;
+        }
+
+    }
+
+    Output[0] = posterise(Color[0]);
+    Output[1] = posterise(Color[1]);
+    Output[2] = posterise(Color[2]);
+
+
+}

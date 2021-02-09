@@ -1,0 +1,76 @@
+// Random circles (or spheres, really) with outputs
+// for bump, random factor, etc. Can be made to make
+// very cool random candy cover, paint flakes...
+//
+// Dots.osl, by Zap Andersson
+// Modified: 2019-11-10
+// Copyright 2019 Autodesk Inc, All rights reserved. This file is licensed under Apache 2.0 license
+//    https://github.com/ADN-DevTech/3dsMax-OSL-Shaders/blob/master/LICENSE.txt
+// Modified: 2020-1-15 by Saul Espinosa for Redshift 3D
+
+shader Candy
+[[ string help="Random circles with random colors and a tunable bump output. For random dots or candy sprinkles.",
+   string category = "Textures"
+]]
+(
+	// For convenience, default to object space
+	// You can connect any other coordinate space
+	// as input anyway...
+	point UVW    = transform("object", P) [[ string help = "The position input, defaulting to object space. Connect an UVW shader for other alternatives." ]],
+	float Scale  = 0.01 [[float min = 0, float max = 25]],
+	float Radius = 0.5      [[ float min=0.0, float max=2.0 ]],
+	int   RandomOverlap = 0 [[ string widget = "checkBox" ]],
+	float BumpAmount = 1.0 [[float min = 0, float max = 5]],
+	float BumpShape  = 1.0 [[float min = 0, float max = 25]],
+
+	output color Col    = 0,
+	output float Fac    = 0,
+	output float Bump   = 0,
+	output float Dist   = 0,
+	output float Rnd    = 0
+)
+{
+	point pnt = UVW / Scale;	
+	float pri = -1;
+  
+	// Standard method for randomization:
+  	// Go through a 3x3x3 grid that we offset
+  	for (float x = -1; x <= 1; x++)
+	{
+    	for (float y = -1; y <= 1; y++)
+		{
+			for(float z = -1; z <= 1; z++)
+			{
+				// Point that sources all our randomization
+				// We run these through cell noises to get
+				// random values
+				// MAXX-44914 fix: Adds the 0.001 offset and floor()
+				point rndpoint = floor(pnt) + point(x, y, z) + 0.001;				
+				// Compute a center 
+				point dotcenter = rndpoint + noise("cell", rndpoint, 1);				      
+				float dist      = distance(dotcenter, pnt);
+				// Randomize the priority, all they all look "stacked" in 
+				// the same direction if they overlap
+				float priority = noise("cell", rndpoint, 2);
+
+				// If within the radius, and priority is higher
+				if (dist < Radius && priority > pri)
+				{
+					pri = priority;
+					
+					Col    = noise("cell", rndpoint, 3);
+					Dist   = dist / Radius;
+					Bump   = pow(sin((1.0 - Dist) * 1.58), BumpShape) * BumpAmount;
+					Fac    = 1.0;
+					Rnd    = priority;
+					
+					// If we exit early, shader is more efficient,
+					// but any "overlap" becomes completely sorted 
+					// in an X/Y/Z order and looks fake.
+					if (!RandomOverlap)
+						return;
+				}
+			}
+		}
+	}
+}

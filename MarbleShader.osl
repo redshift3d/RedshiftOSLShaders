@@ -1,0 +1,135 @@
+/*
+ * LGVeinedMarble.osl by Shane Ambler
+ * from https://github.com/sambler/osl-shaders
+ * 
+ * original script from -
+ * http://www.renderman.org/RMR/RMRShaders.html
+ *
+ * veinedmarble.sl -- surface shader for a nice veined marble.
+ *
+ * DESCRIPTION:
+ *   Makes solid marble texture with strong veins.  The "veincolor" parameter
+ *   controls the color of the veins.  The background color is given by the
+ *   surface color (Cs).
+ * 
+ * PARAMETERS:
+ *   Ka, Kd, Ks, roughness, specularcolor - same as plastic
+ *   veinfreq - controls fhe lowest frequency of the color veins
+ *   veinlevels - how many "levels" of vein tendrills it has
+ *   warpfreq - lowest frequency of the turbulent warping in the marble
+ *   warping - controls how much turbulent warping there will be
+ *   veincolor - the color of the veins
+ *   sharpness - controls how sharp or fuzzy the veins are (higher = sharper)
+ *
+ *
+ * AUTHOR: Larry Gritz, the George Washington University
+ *         email: gritz AT seas DOT gwu DOT edu 
+ *
+ * HISTORY:
+ *
+ * last modified  29 Jun 1994 by Larry Gritz
+ * 2012-12-19 converted to blender osl shader by Shane Ambler
+ * 2020-12-29 converted to a Redshift Shader by Saul Espinosa, added coating closure, new defaults and min/max values
+ *
+ */
+
+
+
+
+shader VeinedMarble (
+
+// Input Paramaters
+
+        vector Vector = P,
+        float DiffuseAmt = 0.8
+		[[string label = "Diffuse Amount" ,
+		float min = 0, float max = 1
+		]],
+        color DiffuseColor = color(0.946,0.788,0.829),
+        float SpecularWeight = 1.0
+		[[string label = "Specular Weight" ,
+		float min = 0, float max = 1
+		]],
+        float Roughness = 0.4
+		[[string label = "Roughness" ,
+		float min = 0, float max = 1
+		]],
+        color SpecularColor = color(1.0),
+		float IOR = 1.48
+		[[string label = "IOR" ,
+		float min = 0, float max = 25
+		]],
+		float CoatWeight = 1.0
+		[[string label = "Coat Weight" ,
+		float min = 0, float max = 1
+		]],
+        float CoatRoughness = 0.005
+		[[string label = "Coat Roughness" ,
+		float min = 0, float max = 1
+		]],
+        color CoatColor = color(1.0),
+		float CoatIOR = 1.52
+		[[string label = "Coat IOR" ,
+		float min = 0, float max = 25
+		]],
+        float VeinFreq = 1.0
+		[[string label = "Vein Frequency" ,
+		float min = 0, float max = 10
+		]],
+        float VeinLevels = 2.0
+		[[string label = "Vein Levels" ,
+		float min = 0, float max = 25
+		]],
+        color VeinColor = color(0.663, 0.319, 0.371),
+        float WarpFreq = 1.0
+		[[string label = "Warp Frequency" ,
+		float min = 0, float max = 25
+		]],
+        float Warping = 0.5
+		[[string label = "Vein Warping" ,
+		float min = 0, float max = 25
+		]],
+        float Sharpness = 8.0
+		[[string label = "Vein Sharpness" ,
+		float min = 0, float max = 25
+		]],
+		
+// Output Closure		
+        output closure color BSDF = diffuse(N) )
+		
+{
+#define snoise(x) (2*noise(x)-1)
+    color Ct;
+    point Nf;
+    point PP, offset;
+    float i, turb, freq, j;
+    float turbsum;
+
+    PP = transform ("shader", Vector);
+
+    /* perturb the lookup */
+    freq = 1;
+    offset = 0;
+    for (i = 0;  i < 6;  i += 1) {
+        offset += 2 * Warping * ( noise (WarpFreq * freq * PP) - 0.5)  / freq;
+        freq *= 2;
+    }
+    PP += offset;
+
+    /* Now calculate the veining function for the lookup area */
+    turbsum = 0;  freq = 1;
+    PP *= VeinFreq;
+    for (i = 0;  i < VeinLevels;  i += 1) {
+        turb = abs (snoise (PP));
+        turb = pow (smoothstep (0.8, 1, 1 - turb), Sharpness) / freq;
+        turbsum += (1-turbsum) * turb;
+        freq *= 3;
+        PP *= 3;
+    }
+
+    Ct = mix (DiffuseColor, VeinColor, turbsum);
+
+    Nf = normalize(N);
+    BSDF = Ct * DiffuseAmt * diffuse(Nf);
+    BSDF += (SpecularColor * SpecularWeight * microfacet("ggx",Nf,Roughness,IOR,0)) + (CoatColor * CoatWeight * microfacet("ggx",Nf,CoatRoughness,CoatIOR,0));
+}

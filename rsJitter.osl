@@ -1,0 +1,64 @@
+// Index based Randomizer
+// Original idea by Zap Andersson, modified by Saul Espinosa for Redshift
+
+shader rsJitter 
+(
+        int   Idx   = 0,
+		
+		/// Color Values
+        int   ColorSeed  = 1
+			[[
+			int min = 0,
+			int max = 100
+			]],
+        color ColorMin   = 0.0,
+        color ColorMax   = 1.0,
+        
+		/// Float Values
+        int   FloatSeed  = 1
+			[[
+			int min = 0,
+			int max = 100
+			]],
+        float FloatMin   = 0.0
+			[[
+			float min = 0,
+			float max = 1
+			]],
+        float FloatMax   = 1.0
+			[[
+			float min = 0,
+			float max = 1
+			]],
+			
+        /// Vector Values
+        int   VectorSeed  = 1
+			[[
+			int min = 0,
+			int max = 100
+			]],
+        vector VectorMin   = 0.0
+			[[
+			vector min = 0,
+			vector max = 100
+			]],
+        vector VectorMax   = 1.0
+        	[[
+			vector min = 0,
+			vector max = 100
+			]],
+
+		/// Define Outputs			
+        output color ColorOut = 0.0,
+        output float FloatOut = 0.0,
+        output vector VectorOut = 0.0,
+)
+{
+        // Output Values
+        float ratio1 = noise("cell", vector(abs(Idx), abs(ColorSeed), 10));
+        float ratio2 = noise("cell", vector(abs(Idx), abs(FloatSeed), 10));
+        float ratio3 = noise("cell", vector(abs(Idx), abs(VectorSeed), 10));    
+        ColorOut = mix(ColorMin, ColorMax, ratio1);
+        FloatOut = mix(FloatMin, FloatMax, ratio2);
+        VectorOut = mix(VectorMin, VectorMax, ratio3);
+}

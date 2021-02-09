@@ -1,0 +1,117 @@
+// Micro Scratched Texture
+//
+// Author: John Su <cuckons@gmail.com>
+//
+// An OSL shader that generates texture to make swirly micro scratch look by
+// controlling the anistropy and roughness.
+// The original idea is from Hang Li(悬挂鲤) and Ben Paschke. Here I implemented
+// it using OSL and exposured some arts friendly parameters.
+
+float lineDistance(point p, float direction){
+    float theta = direction * M_2PI;
+    float s = 0, c = 1;
+    sincos(theta, s, c);
+    vector v = vector(c,s,0);
+    float distance = length(p - (v * dot(v, p)));
+    return distance;
+}
+
+shader Scratches(
+        float density=10
+            [[string label="Density",
+            string widget="number",
+            float min=1,
+            float max=50]],
+        float scale=5
+            [[string label="Scale",
+            string widget="number",
+            float min=.01,
+            float max=100]],
+        float scratchLength=10
+            [[string label="Scratch Length",
+            string widget="number",
+            float min=0,
+            float max=10]],
+        float scratchWidth=1
+            [[string label="Scratch Width",
+            string widget="number",
+            float min=0,
+            float max=10]],
+        float roughness_default = 0.0
+            [[string label="Default Roughness",
+            string widget="number",
+            float min=0,
+            float max=1]],
+        float roughness_min=0.1
+            [[string label="Minimum Roughness",
+            string widget="number",
+            float min=0,
+            float max=1]],
+        float roughness_max=0.2
+            [[string label="Maximum Roughness",
+            string widget="number",
+            float min=0,
+            float max=1]],
+        float anisotropic_min = 0.0
+            [[string label="Minimum Anisotropy",
+            string widget="number",
+            float min=0,
+            float max=1]],
+        float anisotropic_max = 0.2
+            [[string label="Maximum Anisotropy",
+            string widget="number",
+            float min=0,
+            float max=1]],
+    int seed=12345
+        [[string label="Random Seed",
+        string widget="number",
+        int min=0,
+        int max=99999]],
+    output float roughness = 0,
+    output float anisotropy = 0,
+    output float rotation = 0,
+    output float scratch = 0
+){
+    float dense = density*density;
+    float width = scratchWidth;
+    float len = scratchLength;
+    float delta = 1/max(dense*scale, 1);
+    float max_radius = len / max(dense*scale,1);
+    int max_search_cell = (int)ceil(max_radius/delta);
+    point index = point(round(u/delta), round(v/delta), 0.0)*scale;
+    point shading_p = point(u, v , 0.0)*scale;
+    point current_index;
+    point current_origin_p;
+    scratch = 0;
+    float dist = 0;
+    roughness = roughness_default;
+
+    for (int x = -max_search_cell; x <= max_search_cell; ++x){
+        for (int y = -max_search_cell; y <= max_search_cell; ++y){
+            current_index = index + point(x, y, 0)*scale;
+
+            current_origin_p = (current_index + (hashnoise(current_index) - 0.5)) * delta;
+            rotation = hashnoise(current_index + seed);
+            dist = lineDistance(current_origin_p - shading_p, rotation);
+            scratch = 1 - step(width * hashnoise(current_index) / 2048, dist);
+            if (scratch)
+            {
+                roughness = select(
+                        roughness_default,
+                        mix(roughness_min, roughness_max, hashnoise(current_index + seed + 1)),
+                        scratch > 0
+                );
+                anisotropy = select(
+                        0,
+                        mix(anisotropic_min, anisotropic_max, hashnoise(current_index + seed + 2)),
+                        scratch > 0
+                );
+                break;
+            }
+        }
+        if (scratch)
+            break;
+    }
+
+    rotation *= scratch;
+}

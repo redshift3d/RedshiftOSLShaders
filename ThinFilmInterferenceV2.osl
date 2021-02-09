@@ -1,0 +1,567 @@
+/* OSL shader to calculate thin-film interference
+2020: Modified by Saul Espinosa for Redshift 3d GPU Renderer
+v1.6, 2016 prutser. License for the *code*: CC BY-NC-SA 4.0
+Note: the output of the code may explicitly be used for commercial renders.
+
+v1.6: Allow double layers for more flexibility. Use the #define statements below to make the code only calculate
+*/
+
+#include "stdosl.h"
+
+#define SINGLELAYER
+#define DOUBLELAYER
+#define NONVACUUM
+#define EXPOSE_WAVELENGTH
+
+#ifdef DOUBLELAYER
+#define SINGLELAYER
+#endif
+
+#ifndef NONVACUUM
+#define IOR_outside 1
+#endif
+
+#ifndef EXPOSE_WAVELENGTH
+#define wavelength color(0.65,0.532,0.45)
+#endif
+
+
+
+struct complex {
+		color r;
+		color i;
+  };
+  
+
+	
+shader thin_film(
+
+#ifdef SINGLELAYER
+	float d_top = 1
+	[[
+		string help = "thickness of layer 1 in micrometers",
+		string label = "Top Layer Thickness",
+		float min = 0,
+		float max = 25
+	]],
+	float IOR_top = 1.6
+	[[
+		string help = "IOR for top layer",
+		string label = "Top Layer IOR",
+		float min = 0,
+		float max = 25
+	]],
+	color k_top = 0
+	[[
+		string help = "Extinction coefficient of top layer",
+		string label = "Top Layer Extinction",
+		color min = 0,
+		color max = 1
+	]],
+#endif
+
+#ifdef EXPOSE_WAVELENGTH
+	color wavelength = color(0.65,0.532,0.45)
+	[[
+		string help = "RGB wavelengths to use for the interference",
+		string label = "Wavelength",
+		color min = 0,
+		color max = 1
+	]],
+#endif
+
+#ifdef DOUBLELAYER
+	float d_middle = 0
+	[[
+		string help = "thickness of layer 2 in micrometers",
+		string label = "Middle Layer Thickness",
+		float min = 0,
+		float max = 25
+	]],
+	float IOR_middle = 1
+	[[
+		string help = "IOR for middle layer",
+		string label = "Mid Layer IOR",
+		float min = 0,
+		float max = 25
+	]],
+	color k_middle = 0
+	[[
+		string help = "Extinction coefficient of top layer",
+		string label = "Mid Layer Extinction",
+		color min = 0,
+		color max = 1
+	]],
+#endif
+
+// Substrate Parameters
+
+	float IORsubstrate = 1
+	[[
+		string help = "IOR for Substrate Base layer",
+		string label = "Base Layer IOR",
+		float min = 0,
+		float max = 25
+	]],
+	color ksubstrate = 0
+	[[
+		string help = "Extinction coefficient of substrate layer",
+		string label = "Base Layer Extinction",
+		color min = 0,
+		color max = 1
+	]],
+	normal Normal = N,
+	
+#ifdef NONVACUUM
+	color IOR_outside = 1
+	[[
+		string help = "the index of refraction of the ‘outside world’. Typically 1, but under water would be 1.33, for example",
+		string label = "IOR of Environment",
+		color min = 0,
+		color max = 3
+	]],
+#endif
+	
+// Outputs
+
+	output color F = 0
+	[[
+		string help = "F: Reflected percentage of the light, per color (RGB), at the angle between the normal and the ray of light"
+	]],
+	output color F0 = 0
+	[[
+		string help = "F0: reflected percentage of the light, per color (RGB), at normal incidence",
+	]],
+	output color T = 1
+		[[
+		string help = "T: transmitted percentage of light, per color. Can be hooked up to a refractive shader"
+	]],
+	output color T0 = 1
+	[[
+		string help = "T0: transmitted percentage of light at normal incidence"
+	]]
+	
+	)
+
+{
+	   
+	void cmult(complex x, complex y, output complex z)
+	{
+	  complex tmp; //pass by reference issues, if in reality x == z
+	  tmp.r = x.r*y.r-x.i*y.i;
+	  tmp.i = x.r*y.i + x.i*y.r;
+	  z.r = tmp.r; z.i = tmp.i;
+	}
+	
+	void cmult(color x, complex y, output complex z)
+	{
+	  z.r = x*y.r;
+	  z.i = x*y.i;
+	}
+	
+	void cmult(complex x, color y, output complex z)
+	{
+	  z.r = x.r*y;
+	  z.i = x.i*y;
+	}
+
+	void cdiv(complex x, complex y, output complex z)
+	{
+	  complex ystar;
+	  ystar.r = y.r;
+	  ystar.i = -y.i;
+	  
+	  cmult(x,ystar,z); 
+	  z.r = z.r/color((ystar.r*ystar.r+ystar.i*ystar.i));
+	  z.i = z.i/color((ystar.r*ystar.r+ystar.i*ystar.i));
+	}
+	
+	void cadd(complex x, complex y, output complex z)
+	{
+	  z.r = x.r + y.r;
+	  z.i = x.i + y.i;
+	}
+	
+	void cadd(complex x, color y, output complex z)
+	{
+	  z.r = x.r + y;
+	  z.i = x.i;
+	}
+	
+	void cadd(color x, complex y, output complex z)
+	{
+	  z.r = x + y.r;
+	  z.i = y.i;
+	}
+	
+	void csub(complex x, complex y, output complex z)
+	{
+	  z.r = x.r - y.r;
+	  z.i = x.i - y.i;
+	}
+
+	void csub(color x, complex y, output complex z)
+	{
+	  z.r = x - y.r;
+	  z.i = -y.i;
+	}
+	
+	void csub(complex x, color y, output complex z)
+	{
+	  z.r = x.r - y;
+	  z.i = x.i;
+	}
+	
+	void csqrt(complex x, output complex z)
+	{
+	  color r = sqrt(sqrt(color(x.r*x.r) + color(x.i*x.i)));
+	  color phi = atan2(x.i,x.r)/2;
+	  
+	  z.r = r*cos(phi);
+	  z.i = r*sin(phi);
+	}
+	
+	void cexp(complex x, output complex z)
+	{
+		complex tmp;
+		tmp.r = exp(x.r)*cos(x.i);
+		tmp.i = exp(x.r)*sin(x.i);
+		z.r=tmp.r;z.i=tmp.i;
+	}  
+	
+	void kz(complex epsilon, color k, color kx, output complex kz_)
+	{
+	  complex root;
+	  cmult(epsilon,k*k,root);          //eps*k^2
+	  csub(root, kx*kx, root);    //eps*k^2-kx^2
+	  csqrt(root, kz_);
+	}
+	
+	// void kx_k(float cosi, color wavelength, color n, output color kx, output color k)
+	// {
+	  // k = M_PI*2/wavelength;
+	  
+	  // kx = sin(acos(cosi))*k*n;
+	// }
+	
+	void rp(complex kzi, complex kzk, complex ei, complex ek, output complex _rp)
+	{
+	 //return (ek kzi - ei kzk)/(ek kzi + ei kzk);
+	 complex ek_kzi; complex ei_kzk;
+	 cmult(ek, kzi, ek_kzi);
+	 cmult(ei, kzk, ei_kzk);
+				 
+	 complex N; complex D;
+	 csub(ek_kzi, ei_kzk, N);
+	 cadd(ek_kzi, ei_kzk, D);
+	 
+	 cdiv(N,D,_rp);
+	}
+	
+	void rp2tp(complex rp, complex ei, complex ek, output complex _tp)
+	{ 
+	 complex tmp;
+	 cdiv(ei, ek, tmp); //tmp = ei/ek
+	 csqrt(tmp,tmp);	//tmp = sqrt(ei/ek)
+	 
+	 cadd(1,rp,_tp);	//tp = 1 + rp
+			 
+	 cmult(_tp,tmp,_tp);	//tp = (1+rp)*sqrt(ei/ek)
+	 
+	}
+	void rs(complex kzi, complex kzk, output complex _rs)
+	{
+	 //return (kzi - kzk)/(kzi + kzk);
+	 complex N; complex D;
+	 csub(kzi, kzk, N);
+	 cadd(kzi, kzk, D);
+	 
+	 cdiv(N,D,_rs);
+	}
+
+#ifdef SINGLELAYER
+	void FR(complex r01, complex r12, complex kz1, color d, output complex _R, output complex D)
+	{
+		// R = (r01+r12*exp(2*1i*kz1*d))/(1+r01*r12*exp(2i*kz1*d))
+		complex im = {color(0),color(1)};
+		
+		complex exponent; 
+		cmult(2,im,exponent); //2i;
+		cmult(exponent, kz1,exponent); //2i*kz1;
+		cmult(d, exponent, exponent); //2i*kz1*d
+
+		cexp(exponent, exponent); //exp(2i*kz1*d)
+				
+		cmult(r12, exponent, exponent); //r12*exp(2i*kz1*d)
+		
+		complex Num;
+		cadd(r01, exponent, Num); // N = r01+r12.*exp(2*1i.*kz1*d)
+		
+		cmult(r01,exponent, exponent); //exponent = r01*r12.*exp(2*1i.*kz1*d)
+
+		cadd(1, exponent,D); // D = 1+r01*r12.*exp(2*1i.*kz1*d)
+
+		cdiv(Num,D, _R);
+	}
+	
+	void FT(complex t01, complex t12, complex kz1, color d, complex D, output complex _T)
+	{
+		complex im = {color(0),color(1)};
+		complex Num;
+		cmult(im, kz1,Num); //1i*kz1;
+		cmult(d, Num, Num); //1i*kz1*d
+
+		cexp(Num, Num); //exp(1i*kz1*d)
+		
+		cmult(t01,Num,Num);
+		cmult(t12,Num,Num);
+		cdiv(Num,D,_T);
+	}
+#endif
+  
+#if defined(SINGLELAYER) && !defined(DOUBLELAYER)
+	void RperpRpar(color kx, color k, complex eps_0, complex eps_1, complex eps_2, float d_top, output complex Rp, output complex Rs, output complex Tp, output complex Ts, int calcT)
+	{    
+		complex kz0; complex kz1; complex kz2;       
+			
+		kz(eps_0, k, kx, kz0);
+		kz(eps_1, k, kx, kz1);
+		kz(eps_2, k, kx, kz2);
+
+		complex r01; complex r12; complex D; // Denominator, reuse for speed
+		complex t01; complex t12;
+	  
+		rp(kz0,kz1,eps_0,eps_1, r01); 
+		rp(kz1,kz2,eps_1, eps_2, r12); 
+		
+		FR(r01,r12,kz1,d_top,Rp, D);	
+			
+		if (calcT)
+		{
+				//T = t01*t12*(exp(1i*kz1*d_top))/(1+r01*r12*(exp(2i*kz1*d_top)))
+			rp2tp(r01, eps_0,eps_1, t01); 
+			rp2tp(r12, eps_1, eps_2, t12); 
+		
+			FT(t01,t12,kz1,d_top,D, Tp);
+		}
+
+		// Now S-polarized light
+		rs(kz0,kz1, r01);
+		rs(kz1,kz2, r12); 
+		FR(r01,r12,kz1,d_top,Rs, D);
+			
+		if (calcT)
+		{
+			cadd(1,r01,t01);
+			cadd(1,r12,t12);
+			FT(t01,t12,kz1,d_top,D, Ts);
+		} 
+			
+	}
+#endif
+
+#ifdef DOUBLELAYER
+void RperpRpar(color kx, color k, complex eps_0, complex eps_1, complex eps_2, complex eps_3, float d_top, float d_middle, output complex Rp, output complex Rs, output complex Tp, output complex Ts, int calcT)
+	{    
+		complex kz0; complex kz1; complex kz2; complex kz3;       
+			
+		kz(eps_0, k, kx, kz0);
+		kz(eps_1, k, kx, kz1);
+		kz(eps_2, k, kx, kz2);
+		kz(eps_3, k, kx, kz3);
+
+		complex r01; complex r12; complex r23; complex D; // Denominator, reuse for speed
+		complex t01; complex t12; complex t23;
+	  
+		rp(kz0,kz1,eps_0, eps_1, r01); 
+		rp(kz1,kz2,eps_1, eps_2, r12); 
+		rp(kz2,kz3,eps_2, eps_3, r23);
+		
+		// calculate last layer first
+		FR(r12,r23,kz2,d_middle,Rp, D);	
+		
+		// because we reuse D, do not continue with thin film calculation before calculating partial Tp		
+		if (calcT)
+		{
+				//T = t01*t12*(exp(1i*kz1*d_top))/(1+r01*r12*(exp(2i*kz1*d_top)))
+			rp2tp(r12, eps_1,eps_2, t12); 
+			rp2tp(r23, eps_2, eps_3, t23); 
+		
+			FT(t12,t23,kz2,d_middle,D, Tp);
+		}
+		
+		FR(r01,Rp,kz1,d_top,Rp,D);
+		
+		if (calcT)
+		{
+			//T = t01*t12*(exp(1i*kz1*d_top))/(1+r01*r12*(exp(2i*kz1*d_top)))
+			rp2tp(r01, eps_0,eps_1, t01); 
+		
+			FT(t01,Tp,kz1,d_top,D, Tp);
+		}
+
+		// Now S-polarized light
+		rs(kz0,kz1, r01);
+		rs(kz1,kz2, r12); 
+		rs(kz2,kz3, r23);
+		FR(r12,r23,kz2,d_middle,Rs, D);
+		
+			
+		if (calcT)
+		{
+			cadd(1,r12,t12);
+			cadd(1,r23,t23);
+			FT(t12,t23,kz2,d_middle,D, Ts);
+		} 
+		
+		FR(r01,Rs,kz1,d_top,Rs, D);
+		
+		if (calcT)
+		{
+			cadd(1,r01,t01);
+			FT(t01,Ts,kz1,d_top,D, Ts);
+		}		
+	}
+#endif
+	
+#if !defined(SINGLELAYER)
+
+	void RperpRpar(color kx, color k, complex eps_0, complex eps_2, output complex Rp, output complex Rs, output complex Tp, output complex Ts, int calcT)
+	{    
+		complex kz0; complex kz2;       
+			
+		kz(eps_0, k, kx, kz0);
+		kz(eps_2, k, kx, kz2);
+
+		rp(kz0,kz2,eps_0,eps_2, Rp);
+		rs(kz0,kz2, Rs);
+		
+		if (calcT)
+		{
+				rp2tp(Rp,eps_0,eps_2, Tp); 
+				cadd(Rs,1,Ts);		
+		}
+	}	
+#endif
+	
+	int calcT = isconnected(T);
+	
+	color k = M_PI*2/wavelength; //denominator is wavelength in um
+	
+	complex Rp; complex Rs; complex Ts; complex Tp;
+#ifdef DOUBLELAYER
+	float local_d1 = d_top; float local_d2 = d_middle;
+#endif
+	complex nsub = {IORsubstrate, ksubstrate}; 
+
+
+	complex eps3; complex eps0;
+		
+	if (backfacing())
+	{
+	  cmult(nsub,nsub,eps0);
+	  eps3.r=IOR_outside; eps3.i=0;
+	}
+	else
+	{
+	  cmult(nsub,nsub,eps3);
+	  eps0.r=IOR_outside; eps0.i=0;
+	}
+	
+	// the following is nonsense for backfacing metallic substrates  
+	// but so is a ray of light coming out of a metallic substrate
+	color kx = sin(acos(dot(I,Normal)))*k*sqrt(eps0.r);
+	
+#ifdef SINGLELAYER
+	complex nfilm = {IOR_top, k_top};
+
+	complex eps1;
+	cmult(nfilm,nfilm,eps1);
+#endif 
+
+#ifdef DOUBLELAYER
+	nfilm.r = IOR_middle; nfilm.i =k_middle;
+
+	complex eps2;
+	cmult(nfilm,nfilm,eps2);
+	if (backfacing())
+	{
+	  complex tmp = eps1;
+	  eps1 = eps2;
+	  eps2 = tmp;
+	  local_d1 = d_middle; local_d2 = d_top;
+	}
+#endif 
+
+#ifdef DOUBLELAYER
+	RperpRpar(kx, k, eps0, eps1, eps2, eps3, local_d1, local_d2, Rp, Rs, Tp, Ts, calcT);
+#elif defined(SINGLELAYER)
+	RperpRpar(kx, k, eps0, eps1, eps3, d_top, Rp, Rs, Tp, Ts, calcT);
+#else //no layer
+	RperpRpar(kx, k, eps0, eps3, Rp, Rs, Tp, Ts, calcT);
+#endif
+
+	F = (Rp.r*Rp.r+Rp.i*Rp.i+Rs.r*Rs.r+Rs.i*Rs.i)*0.5;
+	
+	if(calcT)
+	{
+#ifdef DOUBLELAYER
+		  if (k_top == 0 && k_middle == 0) //no absorption in the film
+#endif
+#if defined(SINGLELAYER) && !defined(DOUBLELAYER)
+		  if (k_top == 0) //no absorption in the film
+#endif
+
+#ifdef SINGLELAYER
+				T = 1-F;	  // Quick shortcut
+		  else
+		  {				  // I'm going to be pragmatic here. 
+						  // Strictly speaking, the angle of refraction depends not only on the IOR, but also on the absorbance of the substrate (k). 
+						  // But, since this isn't supported in ray tracers anyway, I'm going to let it slide.
+						  // Moreover, this is only really an issue when k ~ 1, and then the light is absorbed within about a wavelength anyway.
+						  
+				T = (Tp.r*Tp.r+Tp.i*Tp.i+Ts.r*Ts.r+Ts.i*Ts.i)*0.5;
+				T = backfacing()? T/IORsubstrate:T*IORsubstrate;
+			}
+#endif
+#ifndef SINGLELAYER
+		T = 1-F;
+#endif 
+	}
+	
+	calcT = isconnected(T0);
+
+	if (isconnected(F0) || calcT)
+	{
+	
+#ifdef DOUBLELAYER
+	RperpRpar(0, k, eps0, eps1, eps2, eps3, d_top, d_middle, Rp, Rs, Tp, Ts, calcT);
+#elif defined(SINGLELAYER)
+	RperpRpar(0, k, eps0, eps1, eps3, d_top, Rp, Rs, Tp, Ts, calcT);
+#else //no layer
+	RperpRpar(0, k, eps0, eps3, Rp, Rs, Tp, Ts, calcT);
+#endif
+
+	  F0 = (Rp.r*Rp.r+Rp.i*Rp.i+Rs.r*Rs.r+Rs.i*Rs.i)*0.5;
+	   
+	  if (calcT)
+	  {
+#ifdef DOUBLELAYER
+		  if (k_top == 0 && k_middle == 0) //no absorption in the film
+#elif defined(SINGLELAYER)
+		  if (k_top == 0) //no absorption in the film
+#else
+		  T0 = 1-F0;
+#endif
+
+#ifdef SINGLELAYER  
+				T0 = 1-F0;	  // Quick shortcut
+		  else
+		  {				  
+				T0 = (Tp.r*Tp.r+Tp.i*Tp.i+Ts.r*Ts.r+Ts.i*Ts.i)*0.5;
+				T0 = backfacing()? T0/IORsubstrate:T0*IORsubstrate;
+		  }
+#endif
+	  }
+	}
+}

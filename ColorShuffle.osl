@@ -1,0 +1,49 @@
+// Adrian Cruceru
+// Redshift Rendering Technologies 2020
+// channel shuffler
+shader ColorShuffle
+[[ string help = "Shuffles Channels",
+   string label = "Shuffle Channels",
+   string category = "Color" ]]
+(
+    color  inColor = color(0,0,0)
+        [[  string label="Input" ]],
+    int inR = 0
+        [[  string label= "Red Channel",
+            string widget = "mapper",
+            string options = "Red:0|Green:1|Blue:2" ]],
+    float redScale = 1
+            [[  string label = "Red Scale",
+                    float min = 0,
+                    float max = 1]],
+    int inG = 1
+        [[  string label= "Green Channel",
+            string widget = "mapper",
+            string options = "Red:0|Green:1|Blue:2" ]],
+    float greenScale = 1
+            [[  string label = "Green Scale",
+                    float min = 0,
+                    float max = 1]],
+    int inB = 2
+        [[  string label= "Blue Channel",
+            string widget = "mapper",
+            string options = "Red:0|Green:1|Blue:2" ]],
+    float blueScale = 1
+            [[  string label = "Blue Scale",
+                    float min = 0,
+                    float max = 1]],
+    output float outRed = 1
+            [[  string label = "Red Output"]],
+    output float outGreen = 1
+            [[  string label = "Green Output"]],
+    output float outBlue = 1
+            [[  string label = "Blue Output"]],
+    output color outColor = 1
+            [[  string label = "Out Color"]]
+)
+{
+    outRed   = inColor[inR]*redScale;
+    outGreen = inColor[inG]*greenScale;
+    outBlue  = inColor[inB]*blueScale;
+    outColor = color(outRed,outGreen,outBlue);
+}

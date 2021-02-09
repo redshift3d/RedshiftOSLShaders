@@ -1,0 +1,90 @@
+/*
+ * Hagelslag.osl by Michel J. Anders (c)2012
+ * from https://github.com/sambler/osl-shaders
+ *
+ * license: cc-by-sa
+ *
+ * original script from -
+ * http://blenderthings.blogspot.com.au/2012/12/a-hagelslag-sprinkles-osl-shader-for.html
+ *
+ *
+ * In blender's homeland hagelslag is the name used for sprinkles.
+ * Enjoy sprinkling blender's hagelslag on all your materials
+ * to make them as delicious as can be ;)
+ * Modified 1/4/2020 by Saul Espinosa for Redshift 3D
+ */
+
+
+// replacement for the missing distance(a, b, q) function
+float minimum_distance(point v, point w, point p) {
+  vector s = w - v;
+  float l2 = dot(s,s);
+  if (l2 == 0.0) return distance(p, v);
+  float t = dot(p - v, s) / l2;
+  if (t < 0.0) return distance(p, v);
+  else if (t > 1.0) return distance(p, w);
+  vector projection = v + t * (s);
+  return distance(p, projection);
+}
+
+shader MAHagelslag(
+        vector Vector = P,
+        float Scale = 1.0
+		[[
+		float min = 0, float max = 25
+		]],
+        int Density = 1
+		[[
+		float min = 0, float max = 25
+		]],
+        int Seed = 0
+		[[
+		int min = 0, int max = 100
+		]],
+        float Radius = 0.05
+		[[
+		float min = 0, float max = 1
+		]],
+        float Size = 1.0
+		[[
+		float min = 0, float max = 25
+		]],
+		
+        output float Fac = 0 )
+{
+    point p = Vector * Scale;
+    point f = floor(p);
+
+    int xx,yy,np;
+    vector one = 1;
+
+    for( xx=-1; xx<=1; xx++){
+        for( yy=-1; yy<=1; yy++){
+            point ff = f + vector(xx,yy,0);
+
+            vector dp = vector(5,7,11);
+
+            for( np=0; np < Density; np++){
+                vector pd1 = 2*cellnoise(ff+dp)-one;
+                vector pd2 = 2*cellnoise(ff+dp+Seed)-one;
+
+                dp *= 17;
+
+                point p1 = ff + pd1;
+                point p2 = ff + pd2;
+
+                p2 = (p2 - p1)*Size+p1;
+
+                // reduce to 2D
+                p1[2]=0;
+                p2[2]=0;
+                p [2]=0;
+
+                float r = minimum_distance(p1,p2,p);
+                if ( r < Radius ) {
+                    Fac = 1 - r/Radius;
+                }
+            }
+        }
+    }
+}
