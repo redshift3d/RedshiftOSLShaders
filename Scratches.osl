@@ -73,7 +73,7 @@ shader Scratches(
         string widget="number",
         int min=0,
         int max=99999]],
-    output float roughness = 0,
+    output float roughness = 0 + roughness_default,
     output float anisotropy = 0,
     output float rotation = 0,
     output float scratch = 0
