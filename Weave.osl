@@ -1,6 +1,7 @@
 // Making a simple Weave, can be used for carbon fiber, cloth, or similar
 // Weave.osl, by Zap Andersson
 // Modified: 2018-12-06
+// Modified: 2021-02-22 by Saul Espinosa for Redshift 3D
 // Copyright 2018 Autodesk Inc, All rights reserved. This file is licensed under Apache 2.0 license
 //    https://github.com/ADN-DevTech/3dsMax-OSL-Shaders/blob/master/LICENSE.txt
 
@@ -30,10 +31,12 @@ shader Weave
 		[[ float min = 0.0, float max = 1.0 ]],	
 	float FrizzBump   = 0.0
 		[[ float min = 0.0, float max = 2.0 ]],	
-	float FrizzScale  = 0.1,
+	float FrizzScale  = 0.1
+		[[ float min = 0.0, float max = 10.0 ]],
 	float Bendyness       = 0.2
 		[[ float min = 0.0, float max = 1.0 ]],	
-	float BendynessScale  = 3.0,
+	float BendynessScale  = 3.0
+		[[ float min = 0.0, float max = 10.0 ]],
 	float OpacityFade     = 0.0
 		[[ float min = 0.0, float max = 1.0 ]],	
 	
@@ -41,7 +44,7 @@ shader Weave
 	// Outputs
 	output color Col = 0.0,	
  	output float Bump = 0.5,
- 	output int   ThreadID = 0,
+ 	output float ThreadID = 0,
  	output float Opacity = 0.0,
 )
 {
@@ -87,7 +90,7 @@ shader Weave
 	}	
 	
 	// Return a random ID for each thread
-	ThreadID = 1 + int((cellnoise(uf) * onV + cellnoise(vf) * onU) * 1024.0) + onU;
+	ThreadID = 1 + float((cellnoise(uf) * onV + cellnoise(vf) * onU) * 1024.0) + onU;
 
 	// Which color to return?	
 	if (onU)
