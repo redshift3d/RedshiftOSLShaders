@@ -1,0 +1,177 @@
+// Make glint reflections, ice, snow, and car shaders for example.
+// Flakes.osl, by Mads Drøschler
+// Modified: 2021-02-31
+// License MIT Copyright Mads Drøschler
+// https://github.com/gkmotu/OSL-Shaders
+vector TileHash ( output vector x, int tileSize ) {
+
+	x = mod(x,tileSize);
+	return noise("hash",x);
+}
+
+vector ID(vector x, int seed,int Tiling,int tileSize)
+{
+    vector n = floor(x);
+    vector f = x-floor(x);
+    vector m = vector(8);
+    vector o;
+    for( int k=-1; k<=1; k++ ){
+    for( int j=-1; j<=1; j++ ){
+    for( int i=-1; i<=1; i++ ){
+    	
+    	vector g = vector( float(i), float(j),float(k) );  	
+    	Tiling? o = TileHash(n+g,tileSize) : o = noise("hash",n+g,seed);
+        vector r = g - f + (0.5+0.5*sin(M_2PI*o));
+        float s = dot(r, r);      
+        s<m[0] ? m = vector(s, o[0], o[1]):0;
+	}}}  
+	
+    return vector( sqrt(m[0]), m[1]+m[2], m[1]+m[0]);
+}
+
+float IDs ( output float x, int seed )
+{ 
+	x = -1000 + x * 2000;
+	x = int(trunc(x));	
+	float x_ratio = noise("cell", vector(abs(x), abs(seed), 11)); 
+	
+	return mix(0, 1, x_ratio);
+}	
+
+shader Flakes
+	[[
+		string help = 	"<h1>Flakes</h1>"
+						"Use the Flake shader to create small glints in surfaces"
+	]]	
+(	
+	// Inputs
+	float scale = 0.2
+	[[
+		string widget = "null",
+		int connectable = 0,
+		string help = 	"<ul><br><li>Scale the IDs up and down. ( This is disabled when Seamless Tiling is enabled )<br></li>"
+						"<li>Use the Tile Size instead when Seamless Tiling is enabled.</li></ul>"
+	]],
+	
+	float Density = 1.0
+	[[
+		string widget = "null",
+		int connectable = 0,
+		float min = 0.0,
+		float max = 1.0,
+		string help =	"<ul><br><li>0.0 will print 0% IDs<br></li>"
+						"<li>0.5 will print 50% of the IDs<br></li>"
+						"<li>1.0 will cover the whole surface with ID's</li></ul>"
+	]],
+	
+	float Randomize = 0.5
+	[[
+		string widget = "null",
+		int connectable = 0,
+		float min = 0.0,
+		float max = 1.0,
+		string help =	"<ul><br><br>A value between 0-1 that will rotate the IDs<br>"
+						"<li>If value is 0, the IDs will point straight up from the surface ( no glints )<br></li>"
+						"<li>If value is 0.5, the IDs will be rotated randomly around 180 deg. ( mild dispersion )<br></li>"
+						"<li>If value is 1, the IDs will be rotated randomly around 360 deg.( Very scattered dispersion )</li></ul>"
+	]],
+	
+	int seed = 42
+	[[
+		string widget = "null",
+		int connectable = 0,
+		string help = 	"<br><br>Reshuffle the layout of the IDs"
+	]],
+	
+	int Tiling = 0
+	[[
+		string widget = "checkBox",
+		string label = "Seamless Tiling",
+		string widget = "null",
+		int connectable = 0,
+		string help =	"<ul><br><br><li>Plug the Flake Shader directly into the Physical Materials diffuse slot</li>"
+						"<br><li>Make a square plane, 100x100/250x250/etc.</li>"
+						"<br><li>Assign the material to the plane.</li>"
+						"<br><li>Enable Seamless Tiling.</li>"
+						"<br><li>Adjust the size of the texure details with the Tile Size parameter.</li>"
+						"<br><li>Bake an Arnold Albedo texture to .exr and convert it to .tx with mipmapping enabled, for optimal performance.</li><br>"
+						"<br>You now have a Seamless Tiling OSL Flake bitmap.</ul>"
+	]],
+	
+	int tileSize = 10
+	[[
+		string widget = "null",
+		int connectable = 0, 
+		string help = 		"<br><br>Increase value to sample more IDs on the seamless tile"
+	]],
+	
+	string CSpace = "object"
+	[[
+		string widget = 	"null",
+		int connectable = 	0,
+		string label =		"Coord Space",
+		string widget =		"popup", 
+		string options = 	"object|world|UV",
+		string help =		"<ul><br><li>Object</li><br>"
+							"<li>World</li><br>"
+							"<li>UV (Texture)</li></ul>"
+	]],
+	
+	// Output
+	output normal Out = 0.0,
+	output float A = 0,
+)
+{
+	// Coord Space
+	string mode;
+	point pos,s = P;
+	vector t = vector(u,v,0); 
+		
+	CSpace == "object" ? mode = "object" : mode = "world";
+	CSpace == "UV" ? pos = transform("object",t) : pos = transform(mode,s);
+	Tiling ? pos = transform("object",t):0;
+
+	// Scale	
+	!Tiling ? pos = pos : pos = pos*tileSize;
+	float sc = scale;
+	!Tiling ? sc = sc : sc = 1.0;
+	
+	// Point
+	point p = (pos)/sc;
+    
+	// Base Normal	
+	vector Base_Normal = vector(0.5,0.5,1.0);
+	
+    // Fetch global ID
+    vector k = ID( p,seed,Tiling,tileSize );
+    
+    // Turn
+    float x = 0.5 + 0.5 * cos( k[1]*M_2PI );
+    float y = 0.5 + 0.5 * sin( k[1]*M_2PI );
+	float z = 0.5 + 0.5 * tan( k[1]*M_2PI );
+    
+    // Normalize
+    Out = normalize(vector(x,y,z)*2-1)*0.5+0.5;  
+    
+    // Fetch xyz IDs        
+    Out[0] = IDs(Out[0],4);
+    Out[1] = IDs(Out[1],4);
+    Out[2] = IDs(Out[2],1);
+    // Fit z to 0.5 - 1.0
+    Out[2] = 0.5 + 0.5 *Out[2];
+    
+	// Density
+	float h = -1000 + Out[0]*2000;
+	h = int(trunc(h));
+	float Rehash = noise("cell", vector(abs(h), abs(16), 11)); 
+	Rehash = mix(0, 1, Rehash);
+	Density > Rehash ? Out = Out : Out = Base_Normal;	
+	
+	// A
+	Out[0] > 0.5 or Out[0] < 0.5 ? A = 1 : A = 0;
+		
+	// Randomize
+	Out = mix(Base_Normal,Out,Randomize);
+	
+	//Out = Out*2-1;	
+}
