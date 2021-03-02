@@ -3,6 +3,7 @@
 // Modified: 2021-02-31
 // License MIT Copyright Mads Drøschler
 // https://github.com/gkmotu/OSL-Shaders
+// Modified: 2021-03-01 by Saul Espinosa for Redshift 3D. Added Metadata + Mapper Menu for Coordinate Space
 vector TileHash ( output vector x, int tileSize ) {
 
 	x = mod(x,tileSize);
@@ -49,6 +50,8 @@ shader Flakes
 	[[
 		string widget = "null",
 		int connectable = 0,
+		float min = 0.0,
+		float max = 25.0,
 		string help = 	"<ul><br><li>Scale the IDs up and down. ( This is disabled when Seamless Tiling is enabled )<br></li>"
 						"<li>Use the Tile Size instead when Seamless Tiling is enabled.</li></ul>"
 	]],
@@ -80,6 +83,8 @@ shader Flakes
 	[[
 		string widget = "null",
 		int connectable = 0,
+		int min = 0,
+		int max = 100,
 		string help = 	"<br><br>Reshuffle the layout of the IDs"
 	]],
 	
@@ -101,17 +106,17 @@ shader Flakes
 	int tileSize = 10
 	[[
 		string widget = "null",
+		int min = 10,
+		int max = 50,
 		int connectable = 0, 
 		string help = 		"<br><br>Increase value to sample more IDs on the seamless tile"
 	]],
 	
-	string CSpace = "object"
+	int CSpace = 0
 	[[
-		string widget = 	"null",
-		int connectable = 	0,
 		string label =		"Coord Space",
-		string widget =		"popup", 
-		string options = 	"object|world|UV",
+		string widget =		"mapper", 
+		string options = 	"object:0|world:1|UV:3",
 		string help =		"<ul><br><li>Object</li><br>"
 							"<li>World</li><br>"
 							"<li>UV (Texture)</li></ul>"
@@ -127,8 +132,8 @@ shader Flakes
 	point pos,s = P;
 	vector t = vector(u,v,0); 
 		
-	CSpace == "object" ? mode = "object" : mode = "world";
-	CSpace == "UV" ? pos = transform("object",t) : pos = transform(mode,s);
+	CSpace == 0 ? mode = "object" : mode = "world";
+	CSpace == 2 ? pos = transform("object",t) : pos = transform(mode,s);
 	Tiling ? pos = transform("object",t):0;
 
 	// Scale	
