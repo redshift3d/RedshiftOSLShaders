@@ -1,0 +1,24 @@
+// Blackbody Color Shader
+// Blackbody.osl, by Zap Andersson
+// Modified: 2019-11-25
+// Copyright 2019 Autodesk Inc, All rights reserved. This file is licensed under Apache 2.0 license
+//    https://github.com/ADN-DevTech/3dsMax-OSL-Shaders/blob/master/LICENSE.txt
+
+shader Blackbody
+[[ string help     = "Modulates a color between two Kelvin temperatures",
+   string category = "Utility"
+]]
+(
+	float  Input = u,
+	float  Min   = 0.0     [[ float min = 0.0, float max = 10000.0 ]],
+	float  Max   = 5000.0  [[ float min = 0.0, float max = 10000.0 ]],
+	int    Normalize = 1   [[ string widget = "checkBox" ]],
+	float  Intensity = 1.0,
+	output color Col = 0.0,
+)
+{
+	Col = blackbody(mix(Min, Max, Input));
+	if (Normalize) 
+		Col = normalize(vector(Col));
+	Col *= Intensity;
+}
