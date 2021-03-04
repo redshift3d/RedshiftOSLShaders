@@ -1,0 +1,19 @@
+// Wavelength Color Shader
+// WaveLength.osl, by Zap Andersson
+// Modified: 2019-11-26
+// Copyright 2019 Autodesk Inc, All rights reserved. This file is licensed under Apache 2.0 license
+//    https://github.com/ADN-DevTech/3dsMax-OSL-Shaders/blob/master/LICENSE.txt
+
+shader WaveLength
+[[ string help = "Modulates a color between two wavelengths of light",
+   string category = "Utility"
+]]
+(
+	float Input = u,
+	float Min   = 400.0,
+	float Max   = 700.0,
+	output color Col = 0.0,
+)
+{
+	Col = wavelength_color(mix(Min, Max, Input));
+}
