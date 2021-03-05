@@ -1,6 +1,7 @@
 // Convert degrees to Radians
 // DegToRad.osl, by Zap Andersson
 // Modified: 2019-11-26
+// Modified: 2021-03-04 by Saul Espinosa, Added Meta Data for Redshift 3D
 // Copyright 2019 Autodesk Inc, All rights reserved. This file is licensed under Apache 2.0 license
 //    https://github.com/ADN-DevTech/3dsMax-OSL-Shaders/blob/master/LICENSE.txt
 
@@ -9,7 +10,7 @@ shader DegToRad
    string label= "Degrees-to-Radians",
    string category = "Math Float" ]]
 (
-	float Input = 0.0 [[ string label="Angle (degrees)" ]],
+	float Input = 0.0 [[ string label="Angle (degrees)", float min = 0, float max = 360 ]],
 	output float Out = 0.0 [[ string label="Angle (radians)" ]],
 )
 {
