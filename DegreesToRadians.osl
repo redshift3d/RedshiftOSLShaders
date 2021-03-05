@@ -1,0 +1,17 @@
+// Convert degrees to Radians
+// DegToRad.osl, by Zap Andersson
+// Modified: 2019-11-26
+// Copyright 2019 Autodesk Inc, All rights reserved. This file is licensed under Apache 2.0 license
+//    https://github.com/ADN-DevTech/3dsMax-OSL-Shaders/blob/master/LICENSE.txt
+
+shader DegToRad
+[[ string help = "Convert degrees to radians",
+   string label= "Degrees-to-Radians",
+   string category = "Math Float" ]]
+(
+	float Input = 0.0 [[ string label="Angle (degrees)" ]],
+	output float Out = 0.0 [[ string label="Angle (radians)" ]],
+)
+{
+	Out = radians(Input);
+}
