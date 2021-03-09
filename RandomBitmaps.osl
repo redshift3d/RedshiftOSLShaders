@@ -1,0 +1,284 @@
+// Randomly place (and alpha-blend) bitmap on top of something else
+// RamdomBitmap.osl by Zap Andersson)
+// Modified: 2019-11-26
+// Copyright 2019 Autodesk Inc, All rights reserved. This file is licensed under Apache 2.0 license
+//    https://github.com/ADN-DevTech/3dsMax-OSL-Shaders/blob/master/LICENSE.txt
+
+color TextureFetch(string filename, point lp, output float a)
+{
+	
+	color rgb = texture(filename, lp[0], 1.0-lp[1], "alpha", a, "wrap", "clamp");
+
+	int channels = 3;
+	gettextureinfo(filename, "channels", channels);
+	if (channels <= 3)  // If there is no alpha...
+		a = 1.0;        // ...use 1.0
+		
+	return rgb;
+}
+
+shader RandomBitmaps
+[[ string help  = "Randomly place (and alpha blend) a set of<br>bitmaps on top of something else",
+   string version = "2.0.0",
+   string label = "Randomized Bitmaps", string page = "0 : General" ]]
+(
+	int   Layers   = 1 [[ int min=1, int max=9, int connectable=0, string widget = "null", string page = "0 : General" ]],
+	
+	vector UVW = vector(u,v,0) [[string page = "3 : Other"]],
+	float  Scale = 1.0 [[ float min = 0, float max = 2, string label = "Overall Scale", string page = "0 : General" ]],
+	color  Input = 0.0
+		[[ string label = "Background RGB", string page = "0 : General",
+		   string help="The input color on top of which everything else is put. Thia allows cascading multiple RandomBitmap on top of each other easily..." ]], 	
+	float  InputAlpha = 1.0
+		[[ float min = 0, float max = 1.0, 
+		   string label = "Background Alpha", string page = "0 : General",
+		   string help="The input alpha on top of which everything else is put. Thia allows cascading multiple RandomBitmap on top of each other easily..." ]], 	
+#define LAYER(x) \
+	string Filename##x = ""   \
+  		[[ string widget="filename",     \
+	  	   string label="File name " #x, \
+	  	   string help="The name of the bitmap to place randomly", string page = "1 : Textures" ]], 
+
+	LAYER(0)
+	//====LAYER-BEGIN====
+	LAYER(1)
+	LAYER(2)
+	LAYER(3)
+	LAYER(4)
+	LAYER(5)
+	LAYER(6)
+	LAYER(7)
+	LAYER(8)
+	LAYER(9)
+	//====LAYER-END====	 
+#undef LAYER	 	   	  	   
+	int    NumFiles = 0
+		[[ string label = "Limit to N Files",
+		   string help  = "By default, all files are used, but for testing purpouses, "
+		                  "one can choose to only use a few of them by setting this "
+		                  "value greater than zero.",
+		   int min = 0, int max = 10, string page = "0 : General" ]],
+
+	int    Seed  = 39
+		[[ string help="The random seed", string page = "2 : Randomization", int min = 0, int max = 100 ]], 
+	vector Probability = vector(1.0, 0.0, 0.1)
+		[[ string help="Three values: The probability a bitmap will show up, the randomness of the variation in the probability, and the scale of said randomness",
+		   float min = 0.0,
+		   float max = 1.0, string page = "2 : Randomization" ]], 
+	vector PosRandom = vector(0.5,0.5,0.0)		
+		[[ string page = "2 : Randomization", string help="Position randomness. For large numbers you may have to turn Overlap up, but impacts performance! Note: the Z value is not used." ]], 
+	vector ScaleMin = vector(1.0, 1.0, 0.0)
+		[[ string help="The scale randomness. For large scales you may have to turn Overlap up, but impacts performance! Note: the Z value is not used." ,
+		   float min = 0.0,
+		   float max = 10.0, string page = "2 : Randomization" ]], 
+	vector ScaleMax = vector(1.0, 1.0, 0.0)
+		[[ string help="The scale randomness. For large scales you may have to turn Overlap up, but impacts performance! Note: the Z value is not used." ,
+		   float min = 0.0,
+		   float max = 10.0, string page = "2 : Randomization" ]], 	
+	int    UniformScale = 1 
+		[[ string widget="checkBox",
+		   string help="If enabled, U and V scales in sync with each other, if off, they scale independently", string page = "2 : Randomization" ]], 	
+	float  PixelScale = 0.0
+		[[ float min = 0, float max = 8192, float sensitivity = 1, string page = "2 : Randomization", string help="Relates pixels to image size.<ul><li>If zero, each image is considered to be a 1.0 x 1.0 square in UV space.<li>If nonzero, maps that many pixels to a the size of 1.0, so that images are the same size w.r.t. to pixels <i>and</i> retains their aspect ratio.<br/><b>NOTE</b>: Sizes ending up larger than 1.0 will require turning up Overlap, which reduces performance!</li></ul>" ]],
+	float  RotMin   = 0.0
+		[[ string help="The Rotational randomness." ,
+		   float min = -360.0,
+		   float max =  360.0, string page = "2 : Randomization", float sensitivity = 1 ]],
+	float  RotMax   = 0.0
+		[[ string help="The Rotational randomness." ,
+		   float min = -360.0,
+		   float max =  360.0, string page = "2 : Randomization", float sensitivity = 1 ]],	
+	int    RotSteps = 1
+		[[ string help="Number of 'steps' of Rotational randomness. 1 means 'no steps'.<br><br>For example, to rotate something only 0, 90, 180 and 270 degrees, set min rotation to 0, max rotation to 270, and RotSteps to 4." ,
+		   int min = 1,
+		   int max = 360, string page = "2 : Randomization" ]],	
+	vector HSVMin   = vector(0.0, 1.0, 1.0)
+		[[ string help="Hue/Saturation/Value randomness. Start range of hue shift and saturation/value scaling" ,
+		   float min = -2.0,
+		   float max =  2.0, string page = "2 : Randomization" ]],	
+	vector HSVMax   = vector(0.0, 1.0, 1.0)
+		[[ string help="Hue/Saturation/Value randomness. End range of hue shift and saturation/value scaling" ,
+		   float min = -2.0,
+		   float max =  2.0, string page = "2 : Randomization" ]],		
+	float  AlphaMin   = 1.0
+		[[ string help="The Alpha randomness. Minimum multiplier of alpha." ,
+		   float min =  0.0,
+		   float max =  1.0, string page = "2 : Randomization" ]],	
+	float  AlphaMax   = 1.0
+		[[ string help="The Alpha randomness. Maximum multiplier of alpha." ,
+		   float min =  0.0,
+		   float max =  1.0, string page = "2 : Randomization" ]],			
+	float  GammaMin   = 0.0
+		[[ string help="The Gamma randomness. Minimum offset of gamma value." ,
+		   float min =  -5.0,
+		   float max =   5.0, string page = "2 : Randomization" ]],	
+	float  GammaMax   = 0.0
+		[[ string help="The Gamma randomness. Maximum offset of gamma value." ,
+		   float min =  -5.0,
+		   float max =   5.0, string page = "2 : Randomization" ]], 			
+	int    Clamp    = 1 
+		[[ string widget = "checkBox", string page = "3 : Other",
+		   string help = "Large color tweaks can yield colors outside of the 0-1 range. It's a good idea to clamp those colors to the 0-1 range..." ]],
+	float  ManualGamma = 2.2 
+		[[ string label="Manual Gamma", string page = "3 : Other" ]],	
+	int    OverLap  = 1
+		[[ string help="For very large scales or position shifts, you may see cut-off textures. This means the shader may need to look further into more neighbouring cells. Increasing this reduces performance A LOT so ONLY do this if absolutely necessary!",
+		   int min=0, int max=5, string page = "3 : Other" ]],
+
+	output color Out = 0.0,
+	output float Alpha = 1.0,
+)
+{
+	// Adjust behaviour based on version
+	int oslversion = 0;
+	getattribute("osl:version", oslversion);
+	
+	point UVWs = UVW / Scale;
+	
+	int   ix = int(floor(UVWs[0]));
+	int   iy = int(floor(UVWs[1]));
+	float fx = UVWs[0] - ix;
+	float fy = UVWs[1] - iy;
+	
+	float gamma = 1.0;
+
+	gamma = ManualGamma;
+	
+	// Start with the output being the input	
+	Out = Input;
+	Alpha = InputAlpha;
+	
+	// The modulo value is number of layers+1
+	int modValue = Layers+1;
+	// Has the user chosen to limit number of files?
+	if (NumFiles > 0 && NumFiles <= Layers)
+		modValue = NumFiles;
+	
+	for (int xx = -OverLap; xx <= OverLap; xx++)
+	{
+		for(int yy = -OverLap; yy <= OverLap; yy++)
+		{
+			// The point used for all the randomness
+			point rndpoint = point(ix + xx, iy + yy, Seed);
+
+			// Compensate for old cellnoise behaviour			
+			if (oslversion >= 11000)
+			{
+				rndpoint[0] = rndpoint[0] < 0 ? rndpoint[0]-1: rndpoint[0];
+				rndpoint[1] = rndpoint[1] < 0 ? rndpoint[1]-1: rndpoint[1];
+				rndpoint[2] = rndpoint[2] < 0 ? rndpoint[2]-1: rndpoint[2];
+			}
+			
+			// Random pos data
+			point pos = ((noise("cell", rndpoint, 0) - vector(0.5,0.5,0.0)) * vector(PosRandom[0], PosRandom[1], 1.0));
+			
+			// The actual lookup point
+			point lp  = point(fx-xx, fy-yy, 0) - pos;
+			
+			float prob = Probability[0] + noise("perlin", rndpoint * Probability[2]) * Probability[1];
+			
+
+			if (pos[2] < prob)
+			{
+				// Scale and rotation randomness
+				point  scr = noise("cell", rndpoint, 1);
+				int    pic = int((float)noise("cell", rndpoint, 15) * 100) % modValue;
+				
+				// XY scaling tweak
+				float sx = 1.0, sy = 1.0;
+				
+				if (PixelScale > 0.0)
+				{
+					int res[2];
+
+					if (pic == 0) gettextureinfo(Filename0, "resolution", res); 
+#define LAYER(x) else if (pic == x) gettextureinfo(Filename##x, "resolution", res); 
+	//====LAYER-BEGIN====
+	LAYER(0)
+	LAYER(1)
+	LAYER(2)
+	LAYER(3)
+	LAYER(4)
+	LAYER(5)
+	LAYER(6)
+	LAYER(7)
+	LAYER(8)
+	LAYER(9)
+	//====LAYER-END====	 
+#undef LAYER				
+					sx = res[0] / PixelScale;
+					sy = res[1] / PixelScale;
+				}
+								
+				float scaleX = sx * mix(ScaleMin[0], ScaleMax[0], scr[0]);
+				float scaleY = sy * mix(ScaleMin[1], ScaleMax[1], scr[UniformScale?0:1]);
+				
+				if (RotSteps > 1)
+				{
+					scr[2] = floor(scr[2] * RotSteps) / (RotSteps - 1);
+				}
+				
+				float rot    = mix(RotMin, RotMax, scr[2]);
+				
+				lp -= 0.5;
+				lp  = rotate(lp, radians(rot), point(0,0,0), vector(0,0,1));
+				lp /= vector(scaleX, scaleY, 1.0);
+				lp += 0.5;
+								
+				if (lp[0] >= 0.0 && lp[0] < 1.0 &&
+				    lp[1] >= 0.0 && lp[1] < 1.0)
+				{																			
+					color rgb;
+					float a = 1.0;
+					
+					if (pic == 0) rgb = TextureFetch(Filename0, lp, a); 
+					
+#define LAYER(x) else if (pic == x) rgb = TextureFetch(Filename##x, lp, a); 
+	//====LAYER-BEGIN====
+	LAYER(0)
+	LAYER(1)
+	LAYER(2)
+	LAYER(3)
+	LAYER(4)
+	LAYER(5)
+	LAYER(6)
+	LAYER(7)
+	LAYER(8)
+	LAYER(9)
+	//====LAYER-END====	 
+#undef LAYER
+					
+					if (a > 0.0)
+					{
+						// Color randomness
+						point clr = noise("cell", rndpoint, 2);
+						// Alpha and Gamma randomness
+						point arr = noise("cell", rndpoint, 3);
+					
+						float gr  = mix(GammaMin, GammaMax, arr[1]);					
+						
+						if (gamma + gr != 1.0)
+							rgb = pow(rgb, gamma + gr);				
+						
+						vector hsvTweak = mix(HSVMin, HSVMax, clr);
+						float       ar  = mix(AlphaMin, AlphaMax, arr[0]);
+						
+						color hsv = transformc("rgb", "hsv", rgb);
+						hsv[0] += hsvTweak[0]; // Offset the hue
+						hsv[1] *= hsvTweak[1]; // Scale the saturation
+						hsv[2] *= hsvTweak[2]; // Scale the value
+						rgb = transformc("hsv", "rgb", hsv);					
+											
+						// Apply alpha randomness
+						rgb *= ar; a *= ar;
+						
+						if (Clamp)
+							rgb = clamp(rgb, 0.0, 1.0);
+					}
+					Alpha = 1.0 - ((1.0-Alpha)*(1.0-a));
+					Out = Out * (1.0-a) + rgb;
+				}			
+			}
+		}
+	}		
+}
