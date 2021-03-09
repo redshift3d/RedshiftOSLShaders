@@ -1,6 +1,7 @@
 // Randomly place (and alpha-blend) bitmap on top of something else
 // RamdomBitmap.osl by Zap Andersson)
 // Modified: 2019-11-26
+// Modified: 2021-03-08 by Saul Espinosa for Redshift 3D
 // Copyright 2019 Autodesk Inc, All rights reserved. This file is licensed under Apache 2.0 license
 //    https://github.com/ADN-DevTech/3dsMax-OSL-Shaders/blob/master/LICENSE.txt
 
