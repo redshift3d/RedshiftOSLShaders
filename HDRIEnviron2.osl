@@ -88,6 +88,10 @@ shader HDRIenv
 		   int connectable = 0 ]],
 	float ClampStops = 10.0 	
 		[[ float min = -10.0, float max = 30.0, float step = 0.1, int connectable=0 ]],
+	int   aces = 0 
+		[[ string widget = "checkBox",
+		   string label = "ACES Output",
+		   int connectable = 0 ]],
 	// Output
 	output color Out = 0 
 )
@@ -189,10 +193,22 @@ matrix rs_transform =
 	// Gamma 2.2 for sRGB approx)
 		float gammapower = Gamma;
 		
+	// ACES sRGB Transform
+		matrix aces_tm = matrix(
+                        0.6131, 0.0701, 0.0206, 0,
+                        0.3395, 0.9164, 0.1096, 0,
+                        0.0474, 0.0135, 0.8698, 0,
+                        0, 0, 0, 1);
+		float r = Out[0], g = Out[1], b = Out[2];
+		
 	// Apply overall Exposure and Contrast
 	Out = pow(Out, gammapower) * pow(2.0, Exposure);	
 	
-	// Add Additional Light
+	// Add Additional Light or ACES Output
+	if (aces == 0)
 	Out += AdditionalLight * AdditionalLightMul;
-
+	else
+	{
+	Out = transform(aces_tm, vector(r,g,b));
+	}
 }
