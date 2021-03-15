@@ -1,5 +1,6 @@
 // Melanin Color Generator OSL node based on Weta's Melanin research paper.
-// This was made for Redshift 3D, by Saul Espinosa v.2.0 - Added Melanin Redness 2/3/2021
+// This was made for Redshift 3D, by Saul Espinosa v.2.1
+// Modified : 3/15/2021 - Added ACEScg Output Support
 // outColor should be input into the Transmission, Internal Reflection inputs of the rsHair and Diffuse if used.
 
 shader MelaninColor
@@ -8,11 +9,32 @@ float melanin = 0.5 [[float min = 0, float max = 1, string label = "Melanin"]],
 color dyeColor = 1 [[string label = "Dye Color"]],
 float redness = 0 [[float min = 0, float max = 1, string label = "Melanin Redness"]],
 float dyeMix = 0 [[float min = 0, float max = 1, string label = "Dye Mix"]],
-	output color outColor = 0
+int convToAces = 0 [[ string widget = "checkBox", string label = "ACES", int connectable = 0 ]],	
+ 
+output color outColor = 0
 )
 {
+// ACES Transform
+	matrix srgbToAcesAP1 = {
+ 	0.6131, 0.0701, 0.0206, 0,
+	0.3395, 0.9164, 0.1096, 0,
+	0.0474, 0.0135, 0.8698, 0,
+	0, 0, 0, 1 };	
+
 float w = max( pow(melanin, 2.0) * 33.0, 0.02);
 	color pheomelanin = exp(w * -vector(0.187, 0.4, 1.05));
 	color eumelanin = exp(w * -vector(0.419, 0.697, 1.37));
-		outColor = mix(mix(eumelanin, pheomelanin, redness), dyeColor, dyeMix);
+	
+	
+	color mel_out = mix(mix(eumelanin, pheomelanin, redness), dyeColor, dyeMix);
+	float sR = mel_out[0];
+	float sG = mel_out[1];
+	float sB = mel_out[2];
+	
+	if (convToAces == 1){
+		outColor = transform(srgbToAcesAP1, vector(sR, sG, sB));
+	}
+	else {
+		outColor = mel_out;
+	}
 }
