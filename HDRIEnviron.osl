@@ -1,0 +1,245 @@
+// HDRI Loader
+// HDRIEnviron2.osl, by Zap Andersson
+// Modified: 2020-01-27
+// Modified: 2021-03-17 by Saul Espinosa for Redshift 3d
+// Copyright 2020 Autodesk Inc, All rights reserved. This file is licensed under Apache 2.0 license
+//    https://github.com/ADN-DevTech/3dsMax-OSL-Shaders/blob/master/LICENSE.txt
+
+shader HDRIenv
+[[ string help  = 
+     "<h3>HDRI Environment</h3> Environment shader with exposure "
+     "adjustments,<br> ground projection mode, and separation between<br> "
+     "<b>Background</b> and <b>Environment</b>",
+   string version  = "1.0.0",
+   string category = "Environment",
+   string label = "HDRI Environment" ]]
+(
+	string HDRI=""  
+		[[ string widget="filename",
+		   string label ="HDRI",
+		   string page = "1 : Texture"
+		]],
+	int    Flip = 0 
+		[[ string widget = "checkBox",
+		   int connectable = 0,
+		   string page = "1 : Texture"]],
+	int   zup = 0
+		[[ string widget = "checkBox",
+			string label = "Z-Up",
+			string page = "1 : Texture",
+			int connectable = 0 ]],
+	float  Rotation = 0 
+		[[ float min = -360.0, float max = 360.0,
+			int connectable=0, float step = 1.0,	
+			string page = "2 : Position"
+		]],
+	float  Height = 0
+		[[ float min = -1.0, float max = 1.0,
+			int connectable=0, float step = 0.001,
+			string page = "2 : Position"
+		]],
+	float  TiltX = 0 + 0
+		[[ float min = -360.0, float max = 360.0,
+			int connectable=0, float step = 0.1,
+			string page = "2 : Position"
+		]],
+	float  TiltY = 0 
+		[[ float min = -360.0, float max = 360.0,
+			int connectable=0, float step = 0.1,
+			string page = "2 : Position"
+		]],
+	float  Exposure = 0 
+		[[ float min = -10, float max = 10,
+			string page = "3 : Adjustments",
+			int connectable=0
+		]],
+	float  Gamma = 1 
+		[[ float min = -3, float max = 3,
+			string page = "3 : Adjustments",
+			int connectable=0
+		]],
+	color  Tint = 1.0
+		[[
+			string page = "3 : Adjustments",
+			int connectable=0
+		]],
+	color AdditionalLight    = 0.0
+		[[ string label = "Additional Light",
+			string page = "4 : Extra Light",
+		]],	 
+	float AdditionalLightMul = 1.0
+		[[ string label = "Additional Light Multiplier", int connectable=0,
+			string page = "4 : Extra Light",
+		]],	 
+	int GroundProjection=0 
+		[[ string widget="checkBox",
+			string page = "5 : Ground Projection",
+			int connectable=0
+		]],
+	point GroundCenter=0 
+		[[ int connectable=0 ,
+		string page = "5 : Ground Projection"
+		]],
+	float GroundRadius=1.5 // Default is in meters
+		[[ int connectable=0, int worldunits=1,	
+		string page = "5 : Ground Projection"
+		]],
+	int UseBackground= 0
+		[[ string widget="checkBox",
+			string page = "6 : Back-Plate",
+			string label = "Use Background",
+			int connectable = 0
+		]],
+	color Background = 0.0
+			[[string page = "6 : Back-Plate"]],
+	float BackgroundMultiplier = 1.0
+		[[ string label = "Background Multiplier",
+			string page = "6 : Back-Plate",
+			int connectable=0 ]],
+	int Blur = 0 
+		[[ string widget = "checkBox",
+			string page = "7 : Blur",
+			int connectable = 0 ]],
+	float BlurAmount = 1.0 	
+		[[ float min = 0.0, float max = 25.0, int connectable=0,
+			string page = "7 : Blur"
+		]],
+	int   BlurSamples = 16
+		[[ int min = 1, int max = 256, int connectable=0,
+			string page = "7 : Blur",		
+		]],
+	int   aces = 0
+		[[ string widget = "checkBox",
+			string page = "8 : Extra",
+			string label = "ACES",
+			int connectable = 0 ]],
+	int   Clamp = 1 
+		[[ string widget = "checkBox",
+			string page = "8 : Extra",
+			int connectable = 0 ]],
+	float ClampStops = 10.0 	
+		[[ float min = -10.0, float max = 30.0, float step = 0.1, int connectable=0,
+			string page = "8 : Extra",		
+		]],
+
+	// Output
+	output color Out = 0 
+)
+{
+
+matrix rs_transform =
+	{ 1, 0, 0, 0,
+	  0, 1*zup,1-zup, 0,
+	  0, 1-zup, 1*zup, 0,
+	  0, 0, 0, 1 };	
+	
+	if (UseBackground && raytype("camera"))
+	{
+		Out = Background * BackgroundMultiplier;
+		return;
+	}
+	
+	float U = 0.0, V = 0.0; 
+	
+	// Change Direction World space Y up to Z up
+	vector Direction  = transform(rs_transform, I);
+	
+	vector OrgDir     = Direction;
+	point  CP         = transform("camera", point(0,0,0));
+
+	// Change position world space Y up to Z up
+	point  Position   = transform(rs_transform, P);
+	
+	// Workaround for Arnolds odd P behaviour in environments....
+	if (Position == 0.0)
+		Position = transform("camera", "world", point(0));
+
+	int doBlur = Blur && BlurAmount > 0.0?raytype("camera"):0;
+				
+	int samples = doBlur?BlurSamples:1;
+	
+	for (int i = 0; i < samples; i++)
+	{
+		if (doBlur)
+			Direction = OrgDir + (noise("hash", I, i) - 0.5) * BlurAmount / 100.0;
+	
+		// Ground Projection mode is on, and direction is pointing down?
+		if (GroundProjection == 1 && Direction[2] < 0.0)
+		{
+			// Compute intersection with virtual ground plane
+			float t = (GroundCenter[2] - Position[2])/Direction[2];
+			point GP = Position + Direction * t;
+			
+			// Assume we are doing the ground
+			int   doGround = 1;
+			
+			if (doGround)
+			{
+				// Compute virtual projection point rays are projecting from
+				point TP = GroundCenter + vector(0, 0, GroundRadius);
+				// Use direction from that point to the groundplane as the
+				// new virtual direction
+				Direction = normalize(GP-TP);
+				
+				// Smoothen out the joint a bit....
+				// Thanks to Vlado for suggestion!
+				if (Direction[2] > -0.1)
+				{
+					float fac = 1.0 - Direction[2] * -10.0;
+					fac *= fac;
+					
+					Direction = mix(Direction, OrgDir, fac);
+				}
+			}
+		} 
+	
+		if (TiltX != 0.0)
+			Direction = rotate(Direction, radians(TiltX), vector(0.0), vector(1,0,0));
+		if (TiltY != 0.0)
+			Direction = rotate(Direction, radians(TiltY), vector(0.0), vector(0,1,0));	
+	
+		// Compute texture UV's in a spherical environment map...
+		U = (Rotation / 360.0) + atan2(Direction[0],Direction[1]) / (M_PI * 2.0);
+		V = 0.5 + (asin(Direction[2]) / M_PI);
+	
+		// Adjust the height by sin(z)
+		V -= Height * sqrt((1.0 - (Direction[2]*Direction[2])));
+	
+		// Look up the texture
+		Out += texture(HDRI, Flip?-U:U, 1.0-V, "wrap", "periodic") * Tint;
+	}
+	
+	Out /= samples;
+	
+	if (Clamp)
+		Out = clamp(Out, 0.0, pow(2.0, ClampStops));
+	else
+	{
+		// Just avoid negative numbers
+		if (Out[0] < 0.0) Out[0] = 0.0;
+		if (Out[1] < 0.0) Out[1] = 0.0;
+		if (Out[2] < 0.0) Out[2] = 0.0;
+	}
+	// Gamma 2.2 for sRGB approx)
+		float gammapower = Gamma;
+		
+	// Apply overall Exposure and Contrast
+	Out = pow(Out, gammapower) * pow(2.0, Exposure) + (AdditionalLight * AdditionalLightMul);	
+	
+	// ACES sRGB Transform
+	matrix aces_tm = matrix(
+		0.6131, 0.0701, 0.0206, 0,
+		0.3395, 0.9164, 0.1096, 0,
+		0.0474, 0.0135, 0.8698, 0,
+		0, 0, 0, 1);
+						
+	float r = Out[0], g = Out[1], b = Out[2];
+		
+	// Add Additional Light or ACES Output
+	if (aces == 0)
+	Out = pow(Out, gammapower) * pow(2.0, Exposure) + (AdditionalLight * AdditionalLightMul);	
+	else
+	{
+	Out = transform(aces_tm, vector(r,g,b));
+	}
+}
