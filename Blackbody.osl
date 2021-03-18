@@ -1,6 +1,6 @@
 // Blackbody Color Shader
 // Blackbody.osl, by Zap Andersson
-// Modified: 2019-11-25
+// Modified: 2021-03-17 by Saul Espinosa for Redshift 3D
 // Copyright 2019 Autodesk Inc, All rights reserved. This file is licensed under Apache 2.0 license
 //    https://github.com/ADN-DevTech/3dsMax-OSL-Shaders/blob/master/LICENSE.txt
 
@@ -9,16 +9,34 @@ shader Blackbody
    string category = "Utility"
 ]]
 (
-	float  Input = u,
-	float  Min   = 0.0     [[ float min = 0.0, float max = 10000.0 ]],
-	float  Max   = 5000.0  [[ float min = 0.0, float max = 10000.0 ]],
-	int    Normalize = 1   [[ string widget = "checkBox" ]],
-	float  Intensity = 1.0,
-	output color Col = 0.0,
+	float  Input = 1.0 [[string page = "1 : Input", float min = 0, float max = 5]],
+	float  Min   = 0.0     [[ float min = 0.0, float max = 10000.0, string page = "1 : Input" ]],
+	float  Max   = 5000.0  [[ float min = 0.0, float max = 10000.0, string page = "1 : Input" ]],
+	float  Intensity = 1.0 [[ float min = 0, float max = 100, string page = "1 : Input" ]],
+	int   aces = 0
+		[[ string widget = "checkBox",
+			string page = "2 : Extra",
+			string label = "ACES",
+			int connectable = 0 ]],
+	output color outColor = 0.0,
 )
 {
-	Col = blackbody(mix(Min, Max, Input));
-	if (Normalize) 
-		Col = normalize(vector(Col));
-	Col *= Intensity;
+	// ACES sRGB Transform
+	matrix aces_tm = matrix(
+		0.6131, 0.0701, 0.0206, 0,
+		0.3395, 0.9164, 0.1096, 0,
+		0.0474, 0.0135, 0.8698, 0,
+		0, 0, 0, 1);
+	
+	color Col = blackbody(mix(Min, Max, Input));
+	color Out = Col * Intensity;
+	float r = Out[0], g = Out[1], b = Out[2];
+	
+// ACES Output
+	if (aces == 0)
+	outColor = Out;
+	else
+	{
+	outColor = transform(aces_tm, vector(r,g,b));
+	}	
 }
