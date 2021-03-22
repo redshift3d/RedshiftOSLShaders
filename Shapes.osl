@@ -1,0 +1,66 @@
+// Compiled after a small session between Martin Breidt & Mads Drøschler Based on a WebGL function.
+// 14.10.2018
+// License: https://creativecommons.org/licenses/by-nc-sa/3.0/
+// Modified : 03.22.2021 by Saul Espinosa For Redshift 3d
+
+
+float lPolygon(vector p, int n)
+{
+	float a = atan2(p[0], p[1]) + M_PI;
+	float r = 2*M_PI/float(n);
+	return cos(floor(0.5 + a/r) * r - a) * length(p);
+}
+
+shader Shapes
+(
+	point Po = point(u, v, 0),
+	int nSides = 3
+		[[ string help = "Number of polygon sides",
+		string label = "UVW",
+		int max = 25,
+		int min = 3 
+		]],  
+	float Softness = 0.09
+		[[ 
+		float min = 0.0,
+		float max = 2.0
+		]],  
+	float Radius = 0.4
+		[[ 
+		float min = 0.001, 
+		float max = 1 
+		]],  
+	float Stretch_U = 1.0
+		[[
+		float min = 0,
+		float max = 2
+		]],
+	float Stretch_V = 1.0
+		[[
+		float min = 0,
+		float max = 2
+		]],
+	float Star_Effect = 1.0
+		[[ string help = "A value > 0 will cause the shape to become more star-like along the W coordinate",
+		float min = 0,
+		float max = 2
+		]],
+	vector Offset = 0.0
+		[[ string help = "Translation of pattern. Use a Z value > 0 to move towards a star-like pattern" ]],
+		
+	color Color_Shape = color(1),
+	color Color_Background = color(0),
+	
+	output color Out = 0,
+
+)
+{
+	vector p = abs(Po-floor(Po));		
+	p = p - vector(0.5, 0.5, 0);
+	
+	p = (p - Offset) *  vector(Stretch_U, Stretch_V, Star_Effect )/ Radius;
+	float d = lPolygon(p, int(mod(nSides-3, 60.)+3.));
+	Out = color(smoothstep(Radius, Radius+Softness, d)); 
+	Out = (1-Out)*Color_Shape+(Out*Color_Background);  // added colors for shape and background //Mads
+	
+}
