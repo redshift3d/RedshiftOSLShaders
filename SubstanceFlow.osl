@@ -88,7 +88,7 @@ shader SubstanceFlow
 (
 	point Po = P
 	[[
-	string labe = "UVW"
+	string label = "UVW"
 	]],
 	float Time = 0
 	[[
