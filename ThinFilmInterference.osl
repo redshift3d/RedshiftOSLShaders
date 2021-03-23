@@ -1,8 +1,7 @@
 /* OSL shader to calculate thin-film interference
-2020: Modified by Saul Espinosa for Redshift 3d GPU Renderer
+v3: Modified : 03.23.2021 by Saul Espinosa for Redshift 3d GPU Renderer, added metadata, new labels, ACES output.
 v1.6, 2016 prutser. License for the *code*: CC BY-NC-SA 4.0
 Note: the output of the code may explicitly be used for commercial renders.
-
 v1.6: Allow double layers for more flexibility. Use the #define statements below to make the code only calculate
 */
 
@@ -37,10 +36,11 @@ struct complex {
 shader thin_film(
 
 #ifdef SINGLELAYER
-	float d_top = 1
+	float thickness_T = 1
 	[[
 		string help = "thickness of layer 1 in micrometers",
 		string label = "Top Layer Thickness",
+		string page = "1 : Top Layer",
 		float min = 0,
 		float max = 25
 	]],
@@ -48,6 +48,7 @@ shader thin_film(
 	[[
 		string help = "IOR for top layer",
 		string label = "Top Layer IOR",
+		string page = "1 : Top Layer",
 		float min = 0,
 		float max = 25
 	]],
@@ -55,26 +56,18 @@ shader thin_film(
 	[[
 		string help = "Extinction coefficient of top layer",
 		string label = "Top Layer Extinction",
-		color min = 0,
-		color max = 1
-	]],
-#endif
-
-#ifdef EXPOSE_WAVELENGTH
-	color wavelength = color(0.65,0.532,0.45)
-	[[
-		string help = "RGB wavelengths to use for the interference",
-		string label = "Wavelength",
+		string page = "1 : Top Layer",
 		color min = 0,
 		color max = 1
 	]],
 #endif
 
 #ifdef DOUBLELAYER
-	float d_middle = 0
+	float thickness_M = 0
 	[[
 		string help = "thickness of layer 2 in micrometers",
 		string label = "Middle Layer Thickness",
+		string page = "2 : Middle Layer",
 		float min = 0,
 		float max = 25
 	]],
@@ -82,6 +75,7 @@ shader thin_film(
 	[[
 		string help = "IOR for middle layer",
 		string label = "Mid Layer IOR",
+		string page = "2 : Middle Layer",
 		float min = 0,
 		float max = 25
 	]],
@@ -89,6 +83,7 @@ shader thin_film(
 	[[
 		string help = "Extinction coefficient of top layer",
 		string label = "Mid Layer Extinction",
+		string page = "2 : Middle Layer",
 		color min = 0,
 		color max = 1
 	]],
@@ -96,54 +91,86 @@ shader thin_film(
 
 // Substrate Parameters
 
-	float IORsubstrate = 1
+	float IOR_base_material = 1
 	[[
 		string help = "IOR for Substrate Base layer",
 		string label = "Base Layer IOR",
+		string page = "3 : Base Layer",
 		float min = 0,
 		float max = 25
 	]],
-	color ksubstrate = 0
+	color k_base_material = 0
 	[[
 		string help = "Extinction coefficient of substrate layer",
 		string label = "Base Layer Extinction",
+		string page = "3 : Base Layer",
 		color min = 0,
 		color max = 1
 	]],
-	normal Normal = N,
+
+#ifdef EXPOSE_WAVELENGTH
+	color wavelength = color(0.65,0.532,0.45)
+	[[
+		string help = "RGB wavelengths to use for the interference",
+		string label = "Wavelength",
+		string page = "4 : Extra",
+		color min = 0,
+		color max = 1
+	]],
+#endif
 	
 #ifdef NONVACUUM
 	color IOR_outside = 1
 	[[
 		string help = "the index of refraction of the ‘outside world’. Typically 1, but under water would be 1.33, for example",
 		string label = "IOR of Environment",
+		string page = "4 : Extra",
 		color min = 0,
 		color max = 3
 	]],
+	
+	normal Normal = N
+	[[
+	string page = "4 : Extra"
+	]],
+
+	int   aces = 0
+	[[ string widget = "checkBox",
+	string label = "ACES",
+	string page = "4 : Extra",
+	int connectable = 0 ]],
+
 #endif
 	
 // Outputs
 
-	output color F = 0
+	output color outColor = 0
 	[[
-		string help = "F: Reflected percentage of the light, per color (RGB), at the angle between the normal and the ray of light"
+		string help = "outColor: Reflected percentage of the light, per color (RGB), at the angle between the normal and the ray of light"
 	]],
-	output color F0 = 0
+	output color outColor_N = 0
 	[[
-		string help = "F0: reflected percentage of the light, per color (RGB), at normal incidence",
+		string help = "outColor_N: reflected percentage of the light, per color (RGB), at normal incidence",
 	]],
-	output color T = 1
+	output color Transmission = 1
 		[[
-		string help = "T: transmitted percentage of light, per color. Can be hooked up to a refractive shader"
+		string help = "Transmission: transmitted percentage of light, per color. Can be hooked up to a refractive shader"
 	]],
-	output color T0 = 1
+	output color Trans_N = 1
 	[[
-		string help = "T0: transmitted percentage of light at normal incidence"
+		string help = "Trans_N: transmitted percentage of light at normal incidence"
 	]]
 	
 	)
 
 {
+	
+		// ACES sRGB Transform
+		matrix aces_tm = matrix(
+		0.6131, 0.0701, 0.0206, 0,
+		0.3395, 0.9164, 0.1096, 0,
+		0.0474, 0.0135, 0.8698, 0,
+		0, 0, 0, 1);
 	   
 	void cmult(complex x, complex y, output complex z)
 	{
@@ -320,7 +347,7 @@ shader thin_film(
 #endif
   
 #if defined(SINGLELAYER) && !defined(DOUBLELAYER)
-	void RperpRpar(color kx, color k, complex eps_0, complex eps_1, complex eps_2, float d_top, output complex Rp, output complex Rs, output complex Tp, output complex Ts, int calcT)
+	void RperpRpar(color kx, color k, complex eps_0, complex eps_1, complex eps_2, float thickness_T, output complex Rp, output complex Rs, output complex Tp, output complex Ts, int calcT)
 	{    
 		complex kz0; complex kz1; complex kz2;       
 			
@@ -334,34 +361,34 @@ shader thin_film(
 		rp(kz0,kz1,eps_0,eps_1, r01); 
 		rp(kz1,kz2,eps_1, eps_2, r12); 
 		
-		FR(r01,r12,kz1,d_top,Rp, D);	
+		FR(r01,r12,kz1,thickness_T,Rp, D);	
 			
 		if (calcT)
 		{
-				//T = t01*t12*(exp(1i*kz1*d_top))/(1+r01*r12*(exp(2i*kz1*d_top)))
+				//Transmission = t01*t12*(exp(1i*kz1*thickness_T))/(1+r01*r12*(exp(2i*kz1*thickness_T)))
 			rp2tp(r01, eps_0,eps_1, t01); 
 			rp2tp(r12, eps_1, eps_2, t12); 
 		
-			FT(t01,t12,kz1,d_top,D, Tp);
+			FT(t01,t12,kz1,thickness_T,D, Tp);
 		}
 
 		// Now S-polarized light
 		rs(kz0,kz1, r01);
 		rs(kz1,kz2, r12); 
-		FR(r01,r12,kz1,d_top,Rs, D);
+		FR(r01,r12,kz1,thickness_T,Rs, D);
 			
 		if (calcT)
 		{
 			cadd(1,r01,t01);
 			cadd(1,r12,t12);
-			FT(t01,t12,kz1,d_top,D, Ts);
+			FT(t01,t12,kz1,thickness_T,D, Ts);
 		} 
 			
 	}
 #endif
 
 #ifdef DOUBLELAYER
-void RperpRpar(color kx, color k, complex eps_0, complex eps_1, complex eps_2, complex eps_3, float d_top, float d_middle, output complex Rp, output complex Rs, output complex Tp, output complex Ts, int calcT)
+void RperpRpar(color kx, color k, complex eps_0, complex eps_1, complex eps_2, complex eps_3, float thickness_T, float thickness_M, output complex Rp, output complex Rs, output complex Tp, output complex Ts, int calcT)
 	{    
 		complex kz0; complex kz1; complex kz2; complex kz3;       
 			
@@ -378,48 +405,48 @@ void RperpRpar(color kx, color k, complex eps_0, complex eps_1, complex eps_2, c
 		rp(kz2,kz3,eps_2, eps_3, r23);
 		
 		// calculate last layer first
-		FR(r12,r23,kz2,d_middle,Rp, D);	
+		FR(r12,r23,kz2,thickness_M,Rp, D);	
 		
 		// because we reuse D, do not continue with thin film calculation before calculating partial Tp		
 		if (calcT)
 		{
-				//T = t01*t12*(exp(1i*kz1*d_top))/(1+r01*r12*(exp(2i*kz1*d_top)))
+				//Transmission = t01*t12*(exp(1i*kz1*thickness_T))/(1+r01*r12*(exp(2i*kz1*thickness_T)))
 			rp2tp(r12, eps_1,eps_2, t12); 
 			rp2tp(r23, eps_2, eps_3, t23); 
 		
-			FT(t12,t23,kz2,d_middle,D, Tp);
+			FT(t12,t23,kz2,thickness_M,D, Tp);
 		}
 		
-		FR(r01,Rp,kz1,d_top,Rp,D);
+		FR(r01,Rp,kz1,thickness_T,Rp,D);
 		
 		if (calcT)
 		{
-			//T = t01*t12*(exp(1i*kz1*d_top))/(1+r01*r12*(exp(2i*kz1*d_top)))
+			//Transmission = t01*t12*(exp(1i*kz1*thickness_T))/(1+r01*r12*(exp(2i*kz1*thickness_T)))
 			rp2tp(r01, eps_0,eps_1, t01); 
 		
-			FT(t01,Tp,kz1,d_top,D, Tp);
+			FT(t01,Tp,kz1,thickness_T,D, Tp);
 		}
 
 		// Now S-polarized light
 		rs(kz0,kz1, r01);
 		rs(kz1,kz2, r12); 
 		rs(kz2,kz3, r23);
-		FR(r12,r23,kz2,d_middle,Rs, D);
+		FR(r12,r23,kz2,thickness_M,Rs, D);
 		
 			
 		if (calcT)
 		{
 			cadd(1,r12,t12);
 			cadd(1,r23,t23);
-			FT(t12,t23,kz2,d_middle,D, Ts);
+			FT(t12,t23,kz2,thickness_M,D, Ts);
 		} 
 		
-		FR(r01,Rs,kz1,d_top,Rs, D);
+		FR(r01,Rs,kz1,thickness_T,Rs, D);
 		
 		if (calcT)
 		{
 			cadd(1,r01,t01);
-			FT(t01,Ts,kz1,d_top,D, Ts);
+			FT(t01,Ts,kz1,thickness_T,D, Ts);
 		}		
 	}
 #endif
@@ -444,15 +471,15 @@ void RperpRpar(color kx, color k, complex eps_0, complex eps_1, complex eps_2, c
 	}	
 #endif
 	
-	int calcT = isconnected(T);
+	int calcT = isconnected(Transmission);
 	
 	color k = M_PI*2/wavelength; //denominator is wavelength in um
 	
 	complex Rp; complex Rs; complex Ts; complex Tp;
 #ifdef DOUBLELAYER
-	float local_d1 = d_top; float local_d2 = d_middle;
+	float local_d1 = thickness_T; float local_d2 = thickness_M;
 #endif
-	complex nsub = {IORsubstrate, ksubstrate}; 
+	complex nsub = {IOR_base_material, k_base_material}; 
 
 
 	complex eps3; complex eps0;
@@ -489,19 +516,29 @@ void RperpRpar(color kx, color k, complex eps_0, complex eps_1, complex eps_2, c
 	  complex tmp = eps1;
 	  eps1 = eps2;
 	  eps2 = tmp;
-	  local_d1 = d_middle; local_d2 = d_top;
+	  local_d1 = thickness_M; local_d2 = thickness_T;
 	}
 #endif 
 
 #ifdef DOUBLELAYER
 	RperpRpar(kx, k, eps0, eps1, eps2, eps3, local_d1, local_d2, Rp, Rs, Tp, Ts, calcT);
 #elif defined(SINGLELAYER)
-	RperpRpar(kx, k, eps0, eps1, eps3, d_top, Rp, Rs, Tp, Ts, calcT);
+	RperpRpar(kx, k, eps0, eps1, eps3, thickness_T, Rp, Rs, Tp, Ts, calcT);
 #else //no layer
 	RperpRpar(kx, k, eps0, eps3, Rp, Rs, Tp, Ts, calcT);
 #endif
 
-	F = (Rp.r*Rp.r+Rp.i*Rp.i+Rs.r*Rs.r+Rs.i*Rs.i)*0.5;
+	color out_film = (Rp.r*Rp.r+Rp.i*Rp.i+Rs.r*Rs.r+Rs.i*Rs.i)*0.5;
+
+	float r = out_film[0], g = out_film[1], b = out_film[2];
+	
+	// ACES Output
+	if (aces == 0)
+	outColor = out_film;
+	else
+	{
+	outColor = transform(aces_tm, vector(r,g,b));
+	}	
 	
 	if(calcT)
 	{
@@ -513,36 +550,36 @@ void RperpRpar(color kx, color k, complex eps_0, complex eps_1, complex eps_2, c
 #endif
 
 #ifdef SINGLELAYER
-				T = 1-F;	  // Quick shortcut
+				Transmission = 1-outColor;	  // Quick shortcut
 		  else
 		  {				  // I'm going to be pragmatic here. 
 						  // Strictly speaking, the angle of refraction depends not only on the IOR, but also on the absorbance of the substrate (k). 
 						  // But, since this isn't supported in ray tracers anyway, I'm going to let it slide.
 						  // Moreover, this is only really an issue when k ~ 1, and then the light is absorbed within about a wavelength anyway.
 						  
-				T = (Tp.r*Tp.r+Tp.i*Tp.i+Ts.r*Ts.r+Ts.i*Ts.i)*0.5;
-				T = backfacing()? T/IORsubstrate:T*IORsubstrate;
+				Transmission = (Tp.r*Tp.r+Tp.i*Tp.i+Ts.r*Ts.r+Ts.i*Ts.i)*0.5;
+				Transmission = backfacing()? Transmission/IOR_base_material:Transmission*IOR_base_material;
 			}
 #endif
 #ifndef SINGLELAYER
-		T = 1-F;
+		Transmission = 1-outColor;
 #endif 
 	}
 	
-	calcT = isconnected(T0);
+	calcT = isconnected(Trans_N);
 
-	if (isconnected(F0) || calcT)
+	if (isconnected(outColor_N) || calcT)
 	{
 	
 #ifdef DOUBLELAYER
-	RperpRpar(0, k, eps0, eps1, eps2, eps3, d_top, d_middle, Rp, Rs, Tp, Ts, calcT);
+	RperpRpar(0, k, eps0, eps1, eps2, eps3, thickness_T, thickness_M, Rp, Rs, Tp, Ts, calcT);
 #elif defined(SINGLELAYER)
-	RperpRpar(0, k, eps0, eps1, eps3, d_top, Rp, Rs, Tp, Ts, calcT);
+	RperpRpar(0, k, eps0, eps1, eps3, thickness_T, Rp, Rs, Tp, Ts, calcT);
 #else //no layer
 	RperpRpar(0, k, eps0, eps3, Rp, Rs, Tp, Ts, calcT);
 #endif
 
-	  F0 = (Rp.r*Rp.r+Rp.i*Rp.i+Rs.r*Rs.r+Rs.i*Rs.i)*0.5;
+	  color outColor_N = (Rp.r*Rp.r+Rp.i*Rp.i+Rs.r*Rs.r+Rs.i*Rs.i)*0.5;
 	   
 	  if (calcT)
 	  {
@@ -551,15 +588,15 @@ void RperpRpar(color kx, color k, complex eps_0, complex eps_1, complex eps_2, c
 #elif defined(SINGLELAYER)
 		  if (k_top == 0) //no absorption in the film
 #else
-		  T0 = 1-F0;
+		  color Trans_N = 1-outColor_N;
 #endif
 
 #ifdef SINGLELAYER  
-				T0 = 1-F0;	  // Quick shortcut
+				color Trans_N = 1-outColor_N;	  // Quick shortcut
 		  else
 		  {				  
-				T0 = (Tp.r*Tp.r+Tp.i*Tp.i+Ts.r*Ts.r+Ts.i*Ts.i)*0.5;
-				T0 = backfacing()? T0/IORsubstrate:T0*IORsubstrate;
+				Trans_N = (Tp.r*Tp.r+Tp.i*Tp.i+Ts.r*Ts.r+Ts.i*Ts.i)*0.5;
+				Trans_N = backfacing()? Trans_N/IOR_base_material:Trans_N*IOR_base_material;
 		  }
 #endif
 	  }
