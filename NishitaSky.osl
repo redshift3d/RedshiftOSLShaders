@@ -1,0 +1,389 @@
+// Nishita Sky Adapted for Redshift
+// Base Nishita implementation built by Ben Simonds - https://github.com/BenSimonds/NishitaSky/blob/master/NishitaAtmos.osl
+/** 
+Modified: 2021-03-23 by Nischal Pokhrel for Redshift 3D.
+Added: Z-Up | Light rotation inputs | Sun, Sky & Mie tint controls | Sun disc + intensity, size & tint control | Exposure, saturation & gamma control
+Aces mode | Faux ozone | Stars based on elevation and height.
+// Starfield based on shader by Thomas Dinges from https://github.com/sambler/osl-shaders
+**/
+
+#include <stdosl.h>
+
+int has_solutions (vector StartPoint, vector UnitVector, float Radius) {
+	float b = 2 * dot (UnitVector, StartPoint);
+	float bsquared = pow(b,2);
+	float c = dot (StartPoint,StartPoint) - pow(Radius,2);
+	float fourac = 4 * c;
+
+	if (bsquared > fourac) {
+		return 1;
+	} else {
+		return 0;
+	}
+}
+
+int linetype (vector StartPoint, vector UnitVector, float Radius) {
+	float b = 2 * dot (UnitVector, StartPoint);
+	float bsquared = pow(b,2);
+	float c = dot (StartPoint,StartPoint) - pow(Radius,2);
+	float fourac = 4 * c;
+
+	if (bsquared > fourac) {
+		float d1 = (-b + pow(bsquared - fourac, 0.5)) / 2;
+		float d2 = (-b - pow(bsquared - fourac, 0.5)) / 2;
+		if (d1 < 0 && d2 < 0) {
+			return 2;
+		} else if (d1 < 0 || d2 < 0) {
+			return 1;
+		} else {
+			return 0;
+		}
+	} else {
+		return 3;
+	}
+}
+
+vector lmin (vector StartPoint, vector UnitVector, float Radius) {
+	float b = 2 * dot (UnitVector, StartPoint);
+	float bsquared = pow(b,2);
+	float c = dot (StartPoint,StartPoint) - pow(Radius,2);
+	float fourac = 4 * c;
+
+	if (bsquared > fourac) {
+		float d1 = (-b + pow(bsquared - fourac, 0.5)) / 2;
+		float d2 = (-b - pow(bsquared - fourac, 0.5)) / 2;
+		return StartPoint + UnitVector * min(d1, d2);
+	} else {
+		return vector(0);
+	}
+}
+
+vector lmax (vector StartPoint, vector UnitVector, float Radius) {
+	float b = 2 * dot (UnitVector, StartPoint);
+	float bsquared = pow(b,2);
+	float c = dot (StartPoint,StartPoint) - pow(Radius,2);
+	float fourac = 4 * c;
+
+	if (bsquared > fourac) {
+		float d1 = (-b + pow(bsquared - fourac, 0.5)) / 2;
+		float d2 = (-b - pow(bsquared - fourac, 0.5)) / 2;
+		return StartPoint + UnitVector * max(d1, d2);
+	} else {
+		return vector(0);
+	}
+}
+
+color softLight (color a, color b){
+	color ab = 0.0;
+	if (length(b) < 0.5){
+		ab = 2*(a*b) + (a*a) * (1-(2*b));
+	}
+	else {
+		ab = sqrt(a) * ((2*b) - 1) + ((2*a) * (1-b));
+	}
+	return (ab);
+}
+
+struct linesample {
+	int has_solutions;
+	int type;
+	vector min;
+	vector max;
+};
+
+
+shader nishita_sky (
+	float Intensity = 20			[[string page = "1: Color Settings"]],
+	float  Exposure = 0 			[[float slidermin = -16, float slidermax = 16, int connectable = 0, string page = "1: Color Settings"]],
+	float  Gamma = 1 				[[float slidermin = 0, float slidermax = 2, int connectable = 0, string page = "1: Color Settings"]],
+	float Saturation = 1			[[float slidermin = 0, float slidermax = 1.5, int connectable = 0, string page = "1: Color Settings"]],
+	float discIntensity = 10		[[float slidermin = 0, float slidermax = 100, string label = "Disc Intensity", string page = "1: Color Settings"]],
+	color discColor = color(1,1,1)	[[string label = "Disc Tint", string page = "1: Color Settings"]],
+	color sunTint = color(1, 1, 1)	[[string label = "Sun Halo Tint", string page = "1: Color Settings"]],
+	color skyTint = color(1, 1, 1)	[[string label = "Sky Tint", string page = "1: Color Settings"]], 
+	int convToAces = 0				[[string widget = "checkBox", string label = "ACES-AP1", int connectable = 0, string page = "1: Color Settings"]],	
+	float Scattering = 1			[[float slidermin = 0.1, float slidermax = 1.315, float slidercenter = 1, int connectable = 0, string page = "2: Control Settings"]],
+	float ozoneDensity = 0			[[float slidermin = -3, float slidermax = 3, float slidercenter = 0, string label = "Ozone Density Multiplier", string page = "2: Control Settings"]],
+	float Height = 200				[[string page = "2: Control Settings"]],
+	float discSize = 1				[[float slidermin = 0, float slidermax = 100, string label = "Disc Size", string page = "2: Control Settings"]],
+	float Azimuth = 0				[[float slidermin = 0, float slidermax = 360, int connectable = 0, string page = "2: Control Settings"]],
+	float Elevation = 0				[[float slidermin = -40, float slidermax = 220, int connectable = 0, string page = "2: Control Settings"]],
+	int useLight = 0				[[string widget = "checkBox", string label = "Use External Rotations", string page = "2: Control Settings"]],
+	vector Light = vector(0, 0, 0)	[[string label = "Rotation Coordinates", string page = "2: Control Settings"]],
+	int flipAxis = 0				[[string widget = "checkBox", string label = "Z-Up", int connectable = 0, string page = "2: Control Settings"]],
+	int useStars = 1				[[string widget = "checkBox", string label = "Enable Stars",string page = "3: Stars Settings"]],
+	float starsIntensity = 1		[[string label = "Stars Intensity", float slidermin = 0, float slidermax = 4 ,string page = "3: Stars Settings"]],
+	float starsFrequency = 0.5		[[string label = "Stars Frequency", float slidermin = 0, float slidermax = 1, string page = "3: Stars Settings"]],
+	float starsWidth = 0.5			[[string label = "Stars Width", float slidermin = 0, float slidermax = 1, string page = "3: Stars Settings"]],
+	output color Sky = 0.0)
+
+{
+	color Rayleigh = 0.0;
+	color Mie = 0.0;
+	color Ozone = 0.0;
+	color outSun = 0.0;
+	color Stars = 0.0;
+
+	//Conversion matrices
+	matrix yUp = 
+	{1,0,0,0,
+	0,1,0,0,
+	0,0,1,0,
+	0,0,0,1};
+	matrix zUp = 
+	{1,0,0,0,
+	0,1*flipAxis,1-flipAxis,0,
+	0,1-flipAxis,-1*flipAxis,0,
+	0,0,0,1};
+	matrix xyz_to_rgb =
+	{3.24096994,1.53738318,-0.49861076,0,
+	-0.96924364,1.8759675,0.04155506,0,
+	0.05563008,-0.20397696,1.05697151,0,
+	0,0,0,1
+	};
+
+	//Variables:
+	float Re = 6360e3; // Radius of the earth
+	float Ra = 6460e3; // Radius of the atmosphere
+	float Hr = 8000; // Rayleigh scale height
+	float Hm = 1200; // Mie scale height
+	float Ho = 10000; // Ozone scale height
+	float g = 0.76 * clamp(Scattering, 0.1, 1.315); // Anisotropy term for Mie scattering.
+	float oD = 0.00000022512612292678; // Ozone Coef at wavelength 18
+
+	vector BetaR = vector(5.8e-6,13.0e-6,22.4e-6);
+	vector BetaM_max = vector(9.73e-6);
+	vector BetaM_min = vector(13.28e-6);
+	vector BetaM =  vector(20e-6);
+	vector BetaO = vector(3.808e-6);
+
+	//Clean up inputs:
+	vector SunDirection = vector(0, 0, 1);
+	SunDirection = normalize(SunDirection);
+	vector Direction = normalize(I);
+
+	//Sun azimuth, elevation and misc light logic
+	if (useLight == 1){
+		if (flipAxis == 0){
+			SunDirection = transform(yUp, SunDirection);
+			SunDirection = rotate(SunDirection, radians(360) - radians(Light[0]), vector(-1,0,0));
+			SunDirection = rotate(SunDirection, radians(Light[1]) + radians(180), vector(0,-1,0));
+		}
+
+		if (flipAxis == 1){
+			SunDirection = rotate(SunDirection, radians(270) - radians(Light[0]), vector(1,0,0));
+			SunDirection = rotate(SunDirection, radians(Light[2]), vector(0,0,-1));		
+		}
+	}
+	else {
+		if (flipAxis == 0){
+			SunDirection = transform(yUp, SunDirection);
+			if (Elevation >= -40){
+				SunDirection = rotate(SunDirection, radians(360) - radians(Elevation), vector(1,0,0));
+			}
+			if (Azimuth >= 0){
+				SunDirection = rotate(SunDirection, radians(Azimuth), vector(0,1,0));
+			}
+		}
+
+		if (flipAxis == 1){
+			if (Elevation >= -40){
+				SunDirection = rotate(SunDirection, radians(270) - radians(Elevation), vector(1,0,0));
+			}
+			if (Azimuth >= 0){
+				SunDirection = rotate(SunDirection, radians(Azimuth), vector(0,0,-1));
+			}
+		}
+	}
+
+	//Calcualte Rayleigh and mie phases.
+	float mu = dot(Direction, SunDirection);
+  	float phaseR = (3/(16 * M_PI)) * (1 + mu*mu);
+  	float phaseM = (3/(8 * M_PI)) * ((1 - g*g) * (1 + mu*mu) / ((2 + g*g) * pow(1 + g*g - 2 * g * mu, 1.5)));
+	
+    // Sun Disc
+    float sunDiameter = discSize * 0.53 * M_PI / 180.0;
+    float sunAmount = step(cos(sunDiameter / 2.0), mu);
+
+	//Stuff that will eventually help form my output.
+	vector SumR = vector(0);
+	vector SumM = vector(0);
+	vector SumO = vector(0);
+
+	//Set up start and end points for my integrals.
+	vector Pu = vector(0,0,0);
+	vector Pv = vector(0,0,0);
+	//Get start and end point for View Line.
+	if (Height > 0) {
+		vector Pc = vector (0, 0, Re + Height);
+		if (flipAxis == 0){
+			Pc = transform(yUp, Pc);
+			Pc = rotate(Pc, radians(-90), vector(1,0,0));
+		}
+		if (flipAxis == 1){
+			Pc = transform(zUp, Pc);
+		}
+
+		Pu = Pc;
+
+		//Ozone
+		oD = 0;
+		if (ozoneDensity != 0){
+			if (Height >= 0.0) {
+				oD = (ozoneDensity * 1000 / -15000.0);
+				oD = clamp(oD, -2000, 3000);
+			}			
+		}
+		//Stars stuff
+		point PP = I;
+		float val;
+		float sf = starsFrequency;
+		sf /= 300;
+		val = smoothstep(1 - starsWidth, 2, noise("perlin", PP / sf));
+		vector cosSunGround = dot(normalize(Pu), normalize(SunDirection));
+		vector sunAngle = acos(cosSunGround);
+		float sunAngleDeg = degrees(sunAngle[0]);
+		float sunAngleDeg_N = (sunAngleDeg - 87) / (135 - 87);
+
+		if (useStars == 1){
+			if (Height <= 30000){
+				Stars = val * pow(4, clamp(2.5 * starsIntensity, 0, 4)) * sunAngleDeg_N;
+				Stars =  -sunAmount + Stars;			
+			}
+			else {
+				Stars = val * pow(1.8, clamp(2.5 * starsIntensity, 0, 4));
+			}
+			Stars = clamp(Stars, 0, 4);	
+		}
+
+		linesample groundline;
+		groundline.has_solutions = has_solutions(Pc, Direction, Re);
+		groundline.type = linetype(Pc, Direction, Re);
+		groundline.min = lmin(Pc, Direction, Re);
+		groundline.max = lmax(Pc, Direction, Re);
+
+		linesample atmosphereline;
+		atmosphereline.has_solutions = has_solutions(Pc, Direction, Ra);
+		atmosphereline.type = linetype(Pc, Direction, Ra);
+		atmosphereline.min = lmin(Pc, Direction, Ra);
+		atmosphereline.max = lmax(Pc, Direction, Ra);
+
+		Pv = atmosphereline.max;
+		if (atmosphereline.has_solutions && atmosphereline.type == 0) {
+			//Line starts outside atmoshere, so Pu becomes Line.min
+			Pu = atmosphereline.min;
+		}
+		if (groundline.has_solutions && groundline.type == 0) {
+			//Line hits ground, Pv becomes point at which line hits ground, which will be Line.min
+			Pv = groundline.min;
+			sunAmount = 0;
+			Stars = 0;
+		}
+	}
+
+	// Create samples along view ray.
+	int numSamples = 16;
+	int numSamplesL = 8;
+	
+	float segmentLength = distance (Pu, Pv) / numSamples;
+	float opticalDepthR = 0;
+  	float opticalDepthM = 0;
+	float opticalDepthO = 0;
+
+	for (int i = 0; i < numSamples; i++) {
+	vector Px = Pu + segmentLength * Direction * (i + 0.5);
+	float sampleHeight = length(Px) - Re;
+
+		/* Get optical depth for light at this sample: */
+		float Hr_sample = exp(-sampleHeight/Hr) * segmentLength;
+		float Hm_sample = exp(-sampleHeight/Hm) * segmentLength;
+		float Ho_sample = exp(-sampleHeight/Ho) * segmentLength;
+
+		opticalDepthR += Hr_sample;
+		opticalDepthM += Hm_sample;
+		opticalDepthO += Ho_sample;
+
+		//Get light depth to sun at this sample.
+		float opticalDepthLR = 0;
+		float opticalDepthLM = 0;
+		float opticalDepthLO = 0;
+
+		linesample atmosphereline_sample;
+		atmosphereline_sample.has_solutions = has_solutions(Px, SunDirection, Ra);
+		atmosphereline_sample.type = linetype(Px, SunDirection, Ra);
+		atmosphereline_sample.min = lmin(Px, SunDirection, Ra);
+		atmosphereline_sample.max = lmax(Px, SunDirection, Ra);
+
+		linesample groundline_sample;
+		groundline_sample.has_solutions = has_solutions(Px, SunDirection, Re);
+		groundline_sample.type = linetype(Px, SunDirection, Re);
+		groundline_sample.min = lmin(Px, SunDirection, Re);
+		groundline_sample.max = lmax(Px, SunDirection, Re);
+
+		vector Ps = atmosphereline_sample.max;
+		int j = 0;
+		if (groundline_sample.has_solutions && groundline_sample.type == 0) {
+			//Light is below horizon from this point. No sample needed.
+			opticalDepthLR += 0;
+			opticalDepthLM += 0;
+			opticalDepthLO += 0;
+		} else {
+			float segmentLengthL = distance(Px, Ps) / numSamplesL;
+
+			for (j = 0; j < numSamplesL; j++) {
+				vector Pl = Px + segmentLengthL * SunDirection * (j + 0.5);
+				float sampleHeightL = length(Pl) - Re;
+				if (sampleHeightL < 0) break;
+				// ignore sampleheights < 0 they're inside the planet...
+				float Hlr_sample = exp(-sampleHeightL/Hr)*segmentLengthL;
+				float Hlm_sample = exp(-sampleHeightL/Hm)*segmentLengthL;
+				float Hlo_sample = exp(-sampleHeightL/Ho)*segmentLengthL;
+
+				opticalDepthLR += Hlr_sample;
+				opticalDepthLM += Hlm_sample;
+				opticalDepthLO += Hlo_sample;
+			}
+		}
+
+		// With our light samples done we can calculate the attenuation.
+		// Only include a sample if we reached j (so not if we hit the break clause for rays that hit the ground in finding the sun)
+		if (j == numSamplesL) {
+			vector tauR = BetaR * (opticalDepthR + opticalDepthLR);
+			vector tauM = BetaM * 1.1 * (opticalDepthM + opticalDepthLM);
+			vector tauO = BetaO * (opticalDepthO + opticalDepthLO);
+			vector tau = tauR + tauM + tauO;
+			vector attnR = vector (exp(-tauR[0]), exp(-tauR[1]), exp(-tauR[2]));
+			vector attnM = vector (exp(-tauM));
+			vector attenuation = vector (exp(-tau[0]), exp(-tau[1]), exp(-tau[2]));
+
+			SumR += Hr_sample * attenuation;
+			SumM += Hm_sample * attenuation; 
+			SumO += Ho_sample * attenuation;
+		}
+	}
+	matrix srgbToAcesAP1 = {
+ 	0.6131, 0.0701, 0.0206, 0,
+	0.3395, 0.9164, 0.1096, 0,
+	0.0474, 0.0135, 0.8698, 0,
+	0, 0, 0, 1 };
+	Rayleigh = color (SumR * phaseR * BetaR) * Intensity * clamp(skyTint, 0, 1);
+	Mie = color (SumM * phaseM * BetaM) * Intensity * clamp(sunTint, 0, 1);
+	Ozone = color (SumO * BetaO * oD) * Intensity * clamp(sunTint, 0, 1);
+	outSun = color (SumM * phaseM * BetaM * discColor) * sunAmount * pow(2, discIntensity);
+	// Subtly merge the rayleigh colors with the stars, cull very dim stars
+	// Merge the rest of the atmosphere
+	color atmosMix = (softLight((Stars * Stars), Rayleigh) + Rayleigh + Mie + Ozone);
+	Sky = (atmosMix + outSun);
+	color toHSV = transformc("hsv", Sky);
+    toHSV[1] = toHSV[1] * Saturation;
+	color toRGB = transformc("hsv", "rgb", toHSV);
+	Sky = toRGB;
+	Sky = pow(Sky, clamp(Gamma, 0, 2)) * pow(2.0, Exposure);
+	float sR = Sky[0];
+	float sG = Sky[1];
+	float sB = Sky[2];
+	if (convToAces == 1){
+		Sky = transform(srgbToAcesAP1, vector(sR, sG, sB));
+		Sky = pow(Sky, Gamma) * pow(2.0, Exposure);
+	}
+}
