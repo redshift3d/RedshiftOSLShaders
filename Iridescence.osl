@@ -68,7 +68,7 @@ float thinFilmReflectance(float cos0, float lambda, float thickness, float n0, f
     return 1 - t;
 }
  
-surface irridescence
+surface iridescence
 [[ string description = "Thin film coating shader. Use as reflection color for the material, with Fresnel for the material OFF (this texture computes its own Fresnel)" ]]
 (  
  float thicknessMin = 220 [[ string description = "Minimum thickness of the film, in nm", string label = "Thickness Min", float min = 0, float max = 2000 ]],
