@@ -78,13 +78,13 @@ shader RandomBitmaps
 		   float max = 10.0, string page = "2 : Randomization" ]], 	
 	int    UniformScale = 1 
 		[[ string widget="checkBox",
-		   string help="If enabled, U and V scales in sync with each other, if off, they scale independently", string page = "2 : Randomization" ]], 	
+		   string help="If enabled, U and V scales in sync with each other, if off, they scale independently", string label = "Randomize Scale Proportionally", string page = "2 : Randomization" ]], 	
 	float  PixelScale = 0.0
 		[[ float min = 0, float max = 8192, float sensitivity = 1, string page = "2 : Randomization", string help="Relates pixels to image size.<ul><li>If zero, each image is considered to be a 1.0 x 1.0 square in UV space.<li>If nonzero, maps that many pixels to a the size of 1.0, so that images are the same size w.r.t. to pixels <i>and</i> retains their aspect ratio.<br/><b>NOTE</b>: Sizes ending up larger than 1.0 will require turning up Overlap, which reduces performance!</li></ul>" ]],
 	float  RotMin   = 0.0
 		[[ string help="The Rotational randomness." ,
-		   float min = -360.0,
-		   float max =  360.0, string page = "2 : Randomization", float sensitivity = 1 ]],
+		   float min = -180,
+		   float max =  180, string page = "2 : Randomization", float sensitivity = 1 ]],
 	float  RotMax   = 0.0
 		[[ string help="The Rotational randomness." ,
 		   float min = -360.0,
