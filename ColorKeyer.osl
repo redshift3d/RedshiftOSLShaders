@@ -1,0 +1,48 @@
+/*
+ * colorKeyer.osl by Fabricio Chamon
+ * Created for Redshift
+ * Date Mar-27-2021
+ * http://www.patreon.com/fchamon
+*/
+
+float changeRange(float val, float from_min, float from_max, float to_min, float to_max){
+    return clamp(to_min + (val - from_min) * (to_max - to_min) / (from_max - from_min), 0, 1);
+}
+
+shader ColorKeyer(
+    int Bypass = 0
+        [[string widget = "checkBox"]],
+    color Texture = color(0,0,0),
+    color ColorToExtract = color(1,0,0),
+    float HueTolerance = 0.01
+        [[float min=0, float max=1]],
+    float SatTolerance = 0.0
+        [[float min=0, float max=1]],
+    float ValTolerance = 1.0
+        [[float min=0, float max=1]],
+    int InvertMatte = 0
+        [[string widget = "checkBox"]],
+    float Contrast = 0
+        [[float min=0, float max=1]],
+    float Factor = 1
+        [[float min=0, float max=10]],
+    output color Matte = color(0,0,0)
+)
+{
+    float errorMargin = 0.0001;
+    color TextureHSV = transformc("hsv", Texture);
+    color ColorHSV = transformc("hsv", ColorToExtract);
+    float hue = changeRange(abs(TextureHSV[0]-ColorHSV[0]), 0, HueTolerance+errorMargin, 1, 0);
+    float sat = changeRange(abs(TextureHSV[1]-ColorHSV[1]), 0, SatTolerance+errorMargin, 1, 0);
+    float val = changeRange(abs(TextureHSV[2]-ColorHSV[2]), 0, ValTolerance+errorMargin, 1, 0);
+    float mask = hue*sat*val;
+    
+    float contrast_remapped = changeRange(Contrast, 0, 1, 0.5, 0);
+    float contrast_min = 0.5-contrast_remapped;
+    float contrast_max = 0.5+contrast_remapped;
+    float contrast_mask = changeRange(mask, contrast_min, contrast_max, 0, 1);
+    mask = contrast_mask * Factor;
+    if (InvertMatte){mask = 1-mask;}
+    
+    Matte = (Bypass)?Texture:mask;
+}
