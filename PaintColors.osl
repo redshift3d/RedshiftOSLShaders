@@ -1,0 +1,26 @@
+//reference: http://glslsandbox.com/e#43216.0
+
+shader PaintColors(
+		float tm=0[[float min=0, float max=100]],
+		float offX=0.175[[float min=0, float max=0.5]],
+		float offY=0.275[[float min=0, float max=0.5]],
+		float offZ=0.25[[float min=0, float max=0.5]],
+	output color c = 0)
+{
+		int   complexity      = 47;    // More points of color.
+		float fluid_speed     = 108.0;  // Drives speed, higher number will make it slower.
+		float clrInt = 0.8;
+		
+	vector p=vector(u,v,0);
+	p=P;
+	for(int i=1;i<complexity;i++)
+	{
+		vector newp = p + tm*0.001;
+		float s=i;
+		newp[0]+=0.6/s*sin(s*p[2]+tm/fluid_speed+0.3*s) + offX; // + mouse[1]/mouse_factor+mouse_offset;
+		newp[1]+=0.6/s*sin(s*p[0]+tm/fluid_speed+0.3*(i+10)) - offY; // - mouse[0]/mouse_factor+mouse_offset;
+		newp[2]+=0.6/s*sin(s*p[1]+tm/fluid_speed+0.3*s) + offZ; 
+		p=newp;
+	}
+	c=vector(clrInt*sin(3.0*p[0])+clrInt, clrInt*sin(3.0*p[1])+clrInt, clrInt*sin(p[0]+p[2])+clrInt);
+}
