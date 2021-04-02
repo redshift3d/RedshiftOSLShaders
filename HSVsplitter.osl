@@ -1,6 +1,7 @@
 /*
  * original script from -
  * http://www.openshading.com/osl/example-shaders/
+ * New/3-clause BSD" license
  */
 
 shader HSVSplitter(
