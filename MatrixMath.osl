@@ -1,4 +1,5 @@
-//Matrix Math Node by Saul Espinosa for Redshift
+// Matrix Math Node by Saul Espinosa for Redshift
+// This file is licensed under Apache 2.0 license
 
 shader enums
 (
