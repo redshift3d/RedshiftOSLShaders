@@ -1,5 +1,5 @@
 /*
- * LGVeinedMarble.osl by Shane Ambler
+ * VeinedMarble.osl by Shane Ambler
  * from https://github.com/sambler/osl-shaders
  * 
  * original script from -
@@ -24,7 +24,7 @@
  *
  * AUTHOR: Larry Gritz, the George Washington University
  *         email: gritz AT seas DOT gwu DOT edu 
- *
+ * This file is licensed under Apache 2.0 license
  * HISTORY:
  *
  * last modified  29 Jun 1994 by Larry Gritz
