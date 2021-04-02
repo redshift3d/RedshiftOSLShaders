@@ -3,6 +3,7 @@
  * Created for Redshift
  * Date Mar-27-2021
  * http://www.patreon.com/fchamon
+ * This file is licensed under Apache 2.0 license
 */
 
 float changeRange(float val, float from_min, float from_max, float to_min, float to_max){
