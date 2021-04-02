@@ -2,6 +2,8 @@
 // This was made for Redshift 3D, by Saul Espinosa v.2.1
 // Modified : 3/15/2021 - Added ACEScg Output Support
 // outColor should be input into the Transmission, Internal Reflection inputs of the rsHair and Diffuse if used.
+// This file is licensed under Apache 2.0 license
+
 
 shader MelaninColor
 (
