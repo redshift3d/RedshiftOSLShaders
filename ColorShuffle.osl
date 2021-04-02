@@ -1,6 +1,8 @@
 // Adrian Cruceru
 // Redshift Rendering Technologies 2020
 // channel shuffler
+// This file is licensed under Apache 2.0 license
+
 shader ColorShuffle
 [[ string help = "Shuffles Channels",
    string label = "Shuffle Channels",
