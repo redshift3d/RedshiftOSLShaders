@@ -1,5 +1,6 @@
 // ACES AP1 Gamut convert from other Color Gamuts conversion V.3.0 node by Saul Espinosa for Redshift
 // Updated 1/28/2021 - V3
+// This file is licensed under Apache 2.0 license
 
 #define NUM_MODES 7
 
