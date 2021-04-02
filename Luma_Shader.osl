@@ -1,6 +1,8 @@
 // Adrian Cruceru
 // Redshift Rendering Technologies 2020
+// This file is licensed under Apache 2.0 license
 // luma
+
 shader Luma
 [[  string help = "computes the relative luminance = luma of an input in various formats",
     string label = "Luma/Relative Luminance" ]]
