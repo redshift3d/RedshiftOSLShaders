@@ -1,12 +1,12 @@
 /*
  * TurbulentColor.osl by elbrujodelatribu (c)2013
  * from https://github.com/sambler/osl-shaders
- *
+ * Modified 04.02.2021 by Saul Espinosa for Redshift 3d
  * original script from -
  * http://elbrujodelatribu.blogspot.com.au/2013/05/blender-cycles-osl-color-turbulence.html
  * based on work from
  * http://glsl.heroku.com/e#8664.0
- *
+ * This file is licensed under Apache 2.0 license
  */
 
 
