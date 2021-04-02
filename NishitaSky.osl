@@ -2,6 +2,7 @@
 // Base Nishita implementation built by Ben Simonds - https://github.com/BenSimonds/NishitaSky/blob/master/NishitaAtmos.osl
 /** 
 Modified: 2021-03-23 by Nischal Pokhrel for Redshift 3D.
+This file is licensed under Apache 2.0 license
 Added: Z-Up | Light rotation inputs | Sun, Sky & Mie tint controls | Sun disc + intensity, size & tint control | Exposure, saturation & gamma control
 Aces mode | Faux ozone | Stars based on elevation and height.
 // Starfield based on shader by Thomas Dinges from https://github.com/sambler/osl-shaders
