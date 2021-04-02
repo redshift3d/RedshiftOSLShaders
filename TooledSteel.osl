@@ -1,5 +1,6 @@
-//Tooled Steel by Ivan DeWolf
+// Tooled Steel by Ivan DeWolf
 // Modified by Saul Espinosa for Redshift
+// This file is licensed under Apache 2.0 license
 
 vector nearPtLine(
     point testLoc,
