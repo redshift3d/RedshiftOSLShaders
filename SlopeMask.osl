@@ -1,4 +1,5 @@
 // Slope Mask Shader by Saul Espinosa for Redshift
+// This file is licensed under Apache 2.0 license
 
 shader SlopeMask
 (
