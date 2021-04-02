@@ -24,8 +24,9 @@
  *      12 Jan 1994 -- recoded by lg in correct shading language.
  *
  * modified  12 Jan 1994 by Larry Gritz
- * converted to OSL bu Thomas Dinges Dec 2012
+ * converted to OSL by Thomas Dinges Dec 2012
  * modified 1/4/2020 by Saul Espinosa for Redshift
+ * This file is licensed under Apache 2.0 license
  */
 
 shader LGStarField(
