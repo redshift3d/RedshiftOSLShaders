@@ -2,6 +2,7 @@
 // by David Hoskins.
 // Water turbulence effect by joltz0r 2013-07-04, improved 2013-07-07
 // Updated 1/4/2020 by Saul Espinosa for Redshift 3D
+// This file is licensed under Apache 2.0 license
 
 // Redefine below to see the tiling...
 //#define SHOW_TILING
