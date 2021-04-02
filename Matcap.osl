@@ -1,3 +1,6 @@
+// Matcap shader for Redshift 3d by Darby Edelen
+// This file is licensed under Apache 2.0 license
+
 shader Matcap(
     string fileName="" [[string label="Texture", string widget="filename"]],
     float gamma=2.2 [[string label="Gamma", float slidercenter=2.2, float min=0.1, float max=10]],
