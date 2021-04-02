@@ -29,7 +29,7 @@
  * This file is licensed under Apache 2.0 license
  */
 
-shader LGStarField(
+shader StarField(
         float Intensity = 0.5
 			[[
 			float min = 0,
