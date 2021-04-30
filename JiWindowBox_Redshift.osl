@@ -185,8 +185,8 @@ shader jiWindowBox_Redshift
     
     float midgroundDepth = 0.5 
     [[ 
-    	float min = 0.05, 
-    	float max = 99,
+    	float min = 0.1, 
+    	float max = 100,
     	int connectable = 0, 
     	string widget = "null",
 		string page = "4 : Midground"
@@ -194,14 +194,18 @@ shader jiWindowBox_Redshift
     
     float midgroundOffsetX = 0
     [[
-    	int connectable = 0, 
+    	int connectable = 0,
+		float min = -10.0, 
+    	float max = 10.0,
     	string widget = "null",
 		string page = "4 : Midground"
     ]],
     
     float midgroundOffsetY = 0
     [[
-    	int connectable = 0, 
+    	int connectable = 0,
+		float min = -10.0, 
+    	float max = 10.0,
     	string widget = "null",
 		string page = "4 : Midground"
     ]],
