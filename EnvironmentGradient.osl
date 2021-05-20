@@ -1,0 +1,57 @@
+// environment_gradient - Various ways to drive an environment gradient ramp
+// Michael Abrahams, 3/23/2021
+// MIT license
+
+shader env_gradient(
+    int gradient_type = 0
+        [[  string label= "Gradient type",
+            string widget = "mapper",
+            string options = "World (Linear):0|World (Polar Angle):1|Camera Space:2" ]],
+    int out_dimension = 0
+        [[  string label= "Output coordinate",
+            string widget = "mapper",
+            string options = "V:0|U:1" ]],
+	int zUpAxis = 0             [[ string widget = "checkBox", string label = "Z is Up" ]],
+    output float out = 0.0,
+    output vector outUV = 0.0
+)
+{
+    float outU;
+    float outV;
+    float incline;
+    float azimuth;
+
+    vector shadingI = I;
+    if (zUpAxis) {
+        shadingI = vector(I.x,I.z,I.y);
+    }
+
+    // World (linear/cylindrical)
+    if (gradient_type == 0) {
+        outUV.y = shadingI.y / 2.0 + 0.5;
+        azimuth = atan(shadingI.z / shadingI.x);
+        outUV.x = azimuth / M_PI + 0.5;
+    }
+
+    // World (Polar angle)
+    if (gradient_type == 1) {
+        incline = acos(shadingI.y);
+        outUV.y = 1.0 - incline / M_PI;
+        azimuth = atan(shadingI.z / shadingI.x);
+        outUV.x = azimuth / M_PI + 0.5;
+    }
+
+    // Screen space
+    if (gradient_type == 2) {
+        vector shadingP = transform("NDC", P);
+        outUV.x = shadingP.x;
+        outUV.y = shadingP.y;
+    }
+
+    if (out_dimension == 0) {
+        out = outUV.y;
+    }
+    else {
+        out = outUV.x;
+    }
+}
