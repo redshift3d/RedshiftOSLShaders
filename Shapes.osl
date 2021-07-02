@@ -12,6 +12,8 @@ float lPolygon(vector p, int n)
 }
 
 shader Shapes
+[[  string help = "Generates Procedural Shapes",
+    string label = "Shapes" ]]
 (
 	point Po = point(u, v, 0),
 	int nSides = 3
