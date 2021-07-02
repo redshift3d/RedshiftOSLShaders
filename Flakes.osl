@@ -42,7 +42,7 @@ float IDs ( output float x, int seed )
 
 shader Flakes
 	[[
-		string help = 	"Use the Flakes shader to create small glints in surfaces"
+		string help = 	"Use the Flakes shader to create small glints in surfaces",
 		string label = "Flakes"
 	]]	
 (	
