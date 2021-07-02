@@ -1,5 +1,6 @@
 //Tooled Steel by Ivan DeWolf
-// Modified by Saul Espinosa for Redshift
+// Modified 4/27/21 by Saul Espinosa for Redshift3d
+// Added ACES output, min/max and page meta data and Coating Microfacet GGX Closure Layer
 
 vector nearPtLine(
     point testLoc,
@@ -11,7 +12,10 @@ vector nearPtLine(
     return lineStart + U * (lineEnd - lineStart);
 }
 
-shader tooldSteel(
+shader tooldSteel
+[[  string help = "Machine Tooled Material Shader",
+    string label = "Machine Tooled Steel" ]]
+(
     color metal_color = color(0.9,0.8,0.7)
 		[[
 			string page = "0 : Metal",
