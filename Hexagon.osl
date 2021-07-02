@@ -15,7 +15,10 @@
 #define A4 (4*A)
 #define SY (1/A)
 
-shader MAhexagon(
+shader MAhexagon
+[[  string help = "Generates an RGB Hexagon Pattern",
+    string label = "Hexagons" ]]
+(
         vector Vector = 0,
         color Diffuse_Color1 = color(0.2, 0.8, 0.2),
         color Diffuse_Color2 = color(0.8, 0.2, 0.2),
