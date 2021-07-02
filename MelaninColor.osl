@@ -6,6 +6,8 @@
 
 
 shader MelaninColor
+[[  string help = "Generates Melanin Output Colors",
+    string label = "Melanin Color" ]]
 (
 float melanin = 0.5 [[float min = 0, float max = 1, string label = "Melanin"]],
 color dyeColor = 1 [[string label = "Dye Color"]],
