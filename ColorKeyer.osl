@@ -10,7 +10,10 @@ float changeRange(float val, float from_min, float from_max, float to_min, float
     return clamp(to_min + (val - from_min) * (to_max - to_min) / (from_max - from_min), 0, 1);
 }
 
-shader ColorKeyer(
+shader ColorKeyer
+[[  string help = "Keys Specific Colors",
+    string label = "Color Keyer" ]]
+(
     int Bypass = 0
         [[string widget = "checkBox"]],
     color Texture = color(0,0,0),
