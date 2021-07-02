@@ -6,7 +6,7 @@
 
 shader Blackbody
 [[ string help     = "Modulates a color between two Kelvin temperatures",
-   string category = "Utility"
+   string category = "Utility",
    string label "Blackbody Emission"
 ]]
 (
