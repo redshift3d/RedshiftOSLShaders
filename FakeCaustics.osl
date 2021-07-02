@@ -4,13 +4,17 @@
 // Updated 1/4/2020 by Saul Espinosa for Redshift 3D
 // This file is licensed under Apache 2.0 license
 
+
 // Redefine below to see the tiling...
 //#define SHOW_TILING
 
 #define TAU 6.28318530718
 
 
-shader FakeCaustics( 
+shader FakeCaustics
+[[  string help = "generates a psuedo caustic like noise pattern",
+    string label = "Fake Caustics" ]]
+( 
 
 	point Po = P,
 	float Time = 0
