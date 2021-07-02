@@ -29,7 +29,10 @@
  * This file is licensed under Apache 2.0 license
  */
 
-shader StarField(
+shader StarField
+[[  string help = "Generates procedural stars",
+    string label = "Starfield" ]]
+(
         float Intensity = 0.5
 			[[
 			float min = 0,
