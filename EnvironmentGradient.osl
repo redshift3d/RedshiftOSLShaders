@@ -2,7 +2,10 @@
 // Michael Abrahams, 3/23/2021
 // MIT license
 
-shader env_gradient(
+shader env_gradient
+[[  string help = "Spherical Gradient for Redshift Environment Mapping",
+    string label = "Environment Gradient" ]]
+(
     int gradient_type = 0
         [[  string label= "Gradient type",
             string widget = "mapper",
