@@ -19,7 +19,10 @@ float lineDistance(point p, float direction){
 }
 
 
-shader Scratches(
+shader Scratches
+[[  string help = "Procedural Scratches",
+    string label = "Scratches" ]]
+(
         float density=10
             [[string label="Density",
             string widget="number",
