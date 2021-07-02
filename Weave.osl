@@ -7,6 +7,7 @@
 
 shader Weave
 	[[ string help="<font size=+1><b>Weave</b></font><br>A simple threaded weave shader. Can be used for everything from cloth to carbon fiber.", 
+	   string label = "Weave",
 	   string URL ="https://github.com/ADN-DevTech/3dsMax-OSL-Shaders" ]]
 (
 	point UVW = point(u,v,0),
