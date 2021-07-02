@@ -1,10 +1,12 @@
 // ACES AP1 Gamut convert from other Color Gamuts conversion V.3.1 node by Saul Espinosa for Redshift
-// Updated 5/3/2021 - V3.1 - Updated & Improved Matrices
+// Updated 6/21/2021 - V3.2 - Added ACEScg inversion Matrices
 // This file is licensed under Apache 2.0 license
 
 #define NUM_MODES 7
 
 shader ACESconvert
+[[  string help = "Converts an input color gamut to ACEScg",
+    string label = "ACES Gamut Convert" ]]
 (
 	color input = 0.5
 	[[	string label = "Input" ]],
@@ -12,6 +14,10 @@ shader ACESconvert
 	[[  string label = "Color Space",
     	string widget = "mapper",
     	string options = "sRGB:0|Rec. 709:1|Rec. 2020:2|Display P3:3|DCI-P3:4|V-Gamut:5|S-Gamut:6"]],
+	int   invert = 0
+	[[ string widget = "checkBox",
+		string label = "Inverse",
+	int connectable = 0 ]],
 	output color outColor = 0
 	[[ string label = "Color" ]]
 )
@@ -32,12 +38,12 @@ shader ACESconvert
 		  0.01959, 0.99553, 0.02453, 0,
 		  0.05505, 0.00228, 0.97067, 0,
 		  0, 0, 0, 1 },
-		// Display P3
+		// Display P3 D65
 		{ 0.73579, 0.04717, 0.00356, 0,
 		  0.21216, 0.93804, 0.04114, 0,
 		  0.05203, 0.014774, 0.95529, 0,
 		  0, 0, 0, 1 },
-		// DCI-P3
+		// DCI-P3 D60
 		{ 0.69472, 0.04297, 0.00361, 0,
 		  0.25626, 0.94617, 0.04301, 0,
 		  0.04901, 0.01084, 0.95336, 0,
@@ -53,10 +59,52 @@ shader ACESconvert
 		  -0.05843, -0.14969, 1.00089, 0,
 		  0, 0, 0, 1 }
 	};
+	
+	matrix aces_tm_inv[NUM_MODES] = {
+		// invert ACES sRGB
+		{ 1.70487, -0.130101, -0.0239479, 0,
+		  -0.621708, 1.1407, -0.128979, 0,
+		  -0.0833087, -0.0105471, 1.15292, 0,
+		  0, 0, 0, 1 },
+		// invert ACES Rec. 709
+		{ 1.70507, -0.130251, -0.023995, 0,
+		  -0.621798, 1.14081, -0.128961, 0,
+		  -0.0832433, -0.010547, 1.15298, 0,
+		  0, 0, 0, 1 },
+		// invert ACES Rec. 2020
+		{ 1.02608, -0.00222513, -0.00500722, 0,
+		  -0.0187585, 1.00459, -0.0252946, 0,
+		 -0.0581487, -0.00223348, 1.03056, 0,
+		  0, 0, 0, 1 },
+		// invert ACES Display P3 D65
+		{ 1.37922, -0.069321, -0.0021545, 0,
+		  -0.30886, 1.08230, -0.045459, 0,
+		  -0.070343, -0.012963, 1.04762, 0,
+		  0, 0, 0, 1 },
+		// invert ACES DCI-P3 D60
+		{ 1.46412, -0.0664636, -0.00254562, 0,
+		  -0.393324, 1.07529, -0.0470216, 0,
+		  -0.070795, -0.00880969, 1.04959, 0,
+		  0, 0, 0, 1 },
+		// invert ACES V-Gamut
+		{ 0.953553, 0.0247907, 0.00326596, 0,
+		  -0.00768311, 0.873045, 0.00482062, 0,
+		  0.0541291, 0.102163, 0.991903, 0,
+		  0, 0, 0, 1 },
+		// invert ACES S-Gamut
+		{ 0.918326, 0.0241784, 0.00321783, 0,
+		  0.0275364, 0.848277, 0.00225582, 0,
+		  0.0577284, 0.128277, 0.999636, 0,
+		  0, 0, 0, 1 }
+	};
 
 	if (mode >= 0 && mode < NUM_MODES)
-    {
+	{
 		float r = input[0], g = input[1], b = input[2];
-		outColor = transform(aces_tm[mode], vector(r,g,b));
+		outColor = transform(invert ? aces_tm_inv[mode] : aces_tm[mode], vector(r, g, b));
+	}
+	else
+	{
+		outColor = 0;
 	}
 }
