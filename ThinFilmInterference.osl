@@ -33,7 +33,10 @@ struct complex {
   
 
 	
-shader thin_film(
+shader thin_film
+[[  string help = "Advanced Multi-Layered Thin Film Interference",
+    string label = "Thin Film Interference" ]]
+(
 
 #ifdef SINGLELAYER
 	float thickness_T = 1
