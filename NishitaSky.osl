@@ -93,7 +93,10 @@ struct linesample {
 };
 
 
-shader nishita_sky (
+shader nishita_sky 
+[[  string help = "Nishita Sky Model for Environments",
+    string label = "Nishita Sky" ]]
+(
 	float Intensity = 20			[[string page = "1: Color Settings"]],
 	float  Exposure = 0 			[[float slidermin = -16, float slidermax = 16, int connectable = 0, string page = "1: Color Settings"]],
 	float  Gamma = 1 				[[float slidermin = 0, float slidermax = 2, int connectable = 0, string page = "1: Color Settings"]],
