@@ -10,7 +10,10 @@
  */
 
 
-shader posterise(
+shader posterise
+[[  string help = "Posterize Filter Effect",
+    string label = "Posterize" ]]
+(
     int Range = 8
 	[[
 	int min = 0, int max = 50
