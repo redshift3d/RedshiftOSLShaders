@@ -27,7 +27,8 @@ color Grader (color Input, color InputMin, color InputMax, vector HSV, color Out
 // UI overhaul port to QT for 3dsmax custom User interface
 // Mads Drøschler 
 shader jiWindowBox_Redshift
-
+[[  string help = "Window Box Projection Shader",
+    string label = "Window Box" ]]
 (
    	// Filename node is not needed with the string widget "filename" in max with this addition.
    	// User can load the texture directly into the shader.
@@ -37,7 +38,6 @@ shader jiWindowBox_Redshift
     	string widget = "filename",
     	int connectable = 0,
 		string page = "0 : Texture",
-    	string widget = "null"
     ]],
 	
 	int zUpAxis = 0
@@ -45,7 +45,6 @@ shader jiWindowBox_Redshift
 		string widget = "checkBox",
 		int connectable = 0,
 		string page = "0 : Texture",
-		string widget = "null"
     ]],
     
     int textureFlip = 0 
@@ -53,7 +52,6 @@ shader jiWindowBox_Redshift
     	string widget = "checkBox",
     	int connectable = 0,
 		string page = "0 : Texture",
-    	string widget = "null"
     ]],
     
     int textureFlop = 0 
@@ -61,7 +59,6 @@ shader jiWindowBox_Redshift
     	string widget = "checkBox",
     	int connectable = 0,
 		string page = "0 : Texture",
-    	string widget = "null"
     ]],
 
     float Hue = 0
@@ -104,7 +101,6 @@ shader jiWindowBox_Redshift
     	string help = "The input value that maps to the darkest output. Incoming black level. ", 
     	int connectable = 0,
 		string page = "2 : Color Clamp",
-    	string widget = "null"   	
     ]],  
     
     color InputMax   = 1.0
@@ -112,7 +108,6 @@ shader jiWindowBox_Redshift
     	string help = "The input value that maps to the brightst output. Incoming white level. ", 
     	int connectable = 0,
 		string page = "2 : Color Clamp",
-    	string widget = "null"    
     ]], 
     
     float MidTones = 1.0
@@ -120,7 +115,6 @@ shader jiWindowBox_Redshift
     	string help = "Adjusts the MidTones/Gamma.",float min   = 0.01, float max = 9.99,
     	int connectable = 0,
 		string page = "2 : Color Clamp",
-    	string widget = "null"    
     ]],
     
     color OutputMin  = 0.0
@@ -128,7 +122,6 @@ shader jiWindowBox_Redshift
     	string help = "The output black level.",
    		int connectable = 0,
 		string page = "2 : Color Clamp",
-    	string widget = "null"
     ]],  
     
     color OutputMax  = 1.0
@@ -136,13 +129,11 @@ shader jiWindowBox_Redshift
     	string help = "The output white level.",
     	int connectable = 0,
 		string page = "2 : Color Clamp",
-    	string widget = "null"    
     ]],
    
     float windowAspect = 1
     [[
     	int connectable = 0, 
-    	string widget = "null",
 		string page = "3 : Window Shape",
 		float min = 0,
 		float max = 10
@@ -154,7 +145,6 @@ shader jiWindowBox_Redshift
     	float max = 100,
     	int connectable = 0,
 		string page = "3 : Window Shape",
-    	string widget = "null"
     ]],
     
     float widthOverscan = 0 
@@ -163,7 +153,6 @@ shader jiWindowBox_Redshift
     	float max = 0.9,
     	int connectable = 0,
 		string page = "3 : Window Shape",
-    	string widget = "null"
     ]],
     
     float heightOverscan = 0 
@@ -172,14 +161,12 @@ shader jiWindowBox_Redshift
     	float max = 0.9,
     	int connectable = 0,
 		string page = "3 : Window Shape",
-    	string widget = "null"
     ]], 
     
     int enableMidground = 0 
     [[ 
     	string widget = "checkBox",
     	int connectable = 0, 
-    	string widget = "null",
 		string page = "4 : Midground",
     ]],
     
@@ -188,7 +175,6 @@ shader jiWindowBox_Redshift
     	float min = 0.1, 
     	float max = 100,
     	int connectable = 0, 
-    	string widget = "null",
 		string page = "4 : Midground"
     ]],  
     
@@ -197,7 +183,6 @@ shader jiWindowBox_Redshift
     	int connectable = 0,
 		float min = -10.0, 
     	float max = 10.0,
-    	string widget = "null",
 		string page = "4 : Midground"
     ]],
     
@@ -206,7 +191,6 @@ shader jiWindowBox_Redshift
     	int connectable = 0,
 		float min = -10.0, 
     	float max = 10.0,
-    	string widget = "null",
 		string page = "4 : Midground"
     ]],
     
@@ -215,7 +199,6 @@ shader jiWindowBox_Redshift
     	string widget = "boolean",
 		string page = "5 : Foreground",
     	int connectable = 0, 
-    	string widget = "null"
     ]],
 	
 	int   Clamp = 1
@@ -224,7 +207,6 @@ shader jiWindowBox_Redshift
     	string help = "Clamp the output to the 0-1 range for each component",
 		string page = "6 : Extra",
     	int connectable = 0, 
-    	string widget = "null"    
     ]],
 	
 	int   aces = 0
