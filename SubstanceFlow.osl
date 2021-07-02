@@ -85,6 +85,8 @@ vec3 flow_texture( vec3 p, float Time, int steps)
 }
 
 shader SubstanceFlow
+[[  string help = "Substance Flow Noise",
+    string label = "Substance Flow" ]]
 (
 	point Po = P
 	[[
