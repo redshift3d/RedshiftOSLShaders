@@ -1,6 +1,9 @@
 //reference: http://glslsandbox.com/e#43216.0
 
-shader PaintColors(
+shader PaintColors
+[[  string help = "Painterly Texture Map Distortion",
+    string label = "Paint Colors" ]]
+(
 		float tm=0[[float min=0, float max=100]],
 		float offX=0.175[[float min=0, float max=0.5]],
 		float offY=0.275[[float min=0, float max=0.5]],
