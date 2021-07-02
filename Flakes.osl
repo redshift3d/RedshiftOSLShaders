@@ -4,6 +4,7 @@
 // License MIT Copyright Mads Drøschler
 // https://github.com/gkmotu/OSL-Shaders
 // Modified: 2021-03-01 by Saul Espinosa for Redshift 3D. Added Metadata + Mapper Menu for Coordinate Space
+
 vector TileHash ( output vector x, int tileSize ) {
 
 	x = mod(x,tileSize);
@@ -41,8 +42,8 @@ float IDs ( output float x, int seed )
 
 shader Flakes
 	[[
-		string help = 	"<h1>Flakes</h1>"
-						"Use the Flake shader to create small glints in surfaces"
+		string help = 	"Use the Flakes shader to create small glints in surfaces"
+		string label = "Flakes"
 	]]	
 (	
 	// Inputs
