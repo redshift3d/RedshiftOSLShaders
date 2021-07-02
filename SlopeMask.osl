@@ -2,6 +2,8 @@
 // This file is licensed under Apache 2.0 license
 
 shader SlopeMask
+[[  string help = "Generates a mask based on Slope and direction",
+    string label = "Slope Mask" ]]
 (
         float Power  = 4.0
         [[
