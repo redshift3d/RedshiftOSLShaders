@@ -2,6 +2,8 @@
 // This file is licensed under Apache 2.0 license
 
 shader enums
+[[  string help = "Matrix Math Node",
+    string label = "Matrix" ]]
 (
     matrix input = matrix(1, 1, 1, 1,
 1, 1, 1, 1,
