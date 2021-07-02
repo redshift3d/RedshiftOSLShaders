@@ -6,6 +6,7 @@
 
 shader WaveLength
 [[ string help = "Modulates a color between two wavelengths of light",
+   string label = "Wavelength Color"
    string category = "Utility"
 ]]
 (
