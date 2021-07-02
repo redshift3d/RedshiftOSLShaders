@@ -10,7 +10,10 @@
  */
 
 
-shader TurbulentColor(
+shader TurbulentColor
+[[  string help = "Turbulent Color Noise",
+    string label = "Turbulent Color" ]]
+(
     vector Vector = P,
     float Scale = 5
 	[[
