@@ -1,8 +1,11 @@
 // Index based Randomizer
-// Original idea by Zap Andersson, modified by Saul Espinosa for Redshift
+// Original idea by Zap Andersson, modified by Saul Espinosa for Redshift 3d
 // This file is licensed under Apache 2.0 license
 
-shader rsJitter 
+
+shader rsJitter
+[[  string help = "Randomizes Color, Float, Vector inputs using UserData",
+    string label = "Jitter" ]]
 (
         int   Idx   = 0,
 		
