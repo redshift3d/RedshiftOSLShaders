@@ -10,7 +10,7 @@
 
 shader Candy
 [[ string help="Random circles with random colors and a tunable bump output. For random dots or candy sprinkles.",
-   string category = "Textures"
+   string category = "Textures",
    string label = "Random Dots"
 ]]
 (
