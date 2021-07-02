@@ -27,7 +27,10 @@ float minimum_distance(point v, point w, point p) {
   return distance(p, projection);
 }
 
-shader MAHagelslag(
+shader MAHagelslag
+[[  string help = "Hagelslag Noise Pattern",
+    string label = "Hagelslag Noise" ]]
+(
         vector Vector = P,
         float Scale = 1.0
 		[[
