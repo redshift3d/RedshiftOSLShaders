@@ -4,7 +4,10 @@
  * New/3-clause BSD" license
  */
 
-shader HSVSplitter(
+shader HSVSplitter
+[[  string help = "Splits the RGB input into HSV Outputs",
+    string label = "HSV Splitter" ]]
+(
     color Color = 0.8,
     output float H = 0.0,
     output float S = 0.0,
