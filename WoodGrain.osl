@@ -120,7 +120,10 @@ float oaktexture (point Pshad,
 // larry gritz' original shader was a closure but this shader
 // provides different outputs that you can plug into your own
 // closures/shaders
-surface oak(
+surface oak
+[[  string help = "Procedural Wood Grain Shader",
+    string label = "Wood Grain" ]]
+(
         point Vector = P,
         color LightWood = color(0.5, 0.2, 0.067),
         color DarkWood = color(0.15, 0.077, 0.028),
