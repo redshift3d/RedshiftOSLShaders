@@ -37,7 +37,10 @@
 
 
 
-shader VeinedMarble (
+shader VeinedMarble 
+[[  string help = "Marble Closure Based Material",
+    string label = "Marble" ]]
+(
 
 // Input Paramaters
 
