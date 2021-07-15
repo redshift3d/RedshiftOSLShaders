@@ -1,0 +1,55 @@
+// OSL Shader by Tomás Atria based on http://glslsandbox.com/ examples
+// Modified by Saul Espinosa 7/15/2021 for Redshift 3d
+
+shader noise_colors
+[[  string help = "Swirling Color Noise",
+    string label = "Noise Colors" ]]
+(
+	point Po = point(u,v,0)
+	[[	string label = "Position" ]],
+	
+	float Time = 1.0
+	[[	string label = "Time", float min = 0.0, float max = 1000.0]],
+	
+	int   aces = 0
+	[[ string widget = "checkBox",
+	string label = "ACES",
+	int connectable = 0 ]],
+	
+	output color outColor = 0,
+)
+
+{
+	float Pi = 10.;
+	int   complexity      = 30;    // More points of color.
+	float fluid_speed     = 600.0;  // Drives speed, higher number will make it slower.
+	float color_intensity = 0.5;
+	point p = Po;
+	p *= 2;
+	for(int i=1;i<complexity;i++)
+
+{
+    point newp=p + Time*0.001;
+    newp[0]+=0.6/float(i)*sin(float(i)*p[1]+Time/fluid_speed+20.3*float(i)) + 0.5; // + mouse.y/mouse_factor+mouse_offset;
+    newp[1]+=0.6/float(i)*sin(float(i)*p[0]+Time/fluid_speed+0.3*float(i+10)) - 0.5; // - mouse.x/mouse_factor+mouse_offset;
+    p=newp;
+}
+	// ACES sRGB Transform
+	matrix aces_tm = matrix(
+		0.6131, 0.0701, 0.0206, 0,
+		0.3395, 0.9164, 0.1096, 0,
+		0.0474, 0.0135, 0.8698, 0,
+		0, 0, 0, 1);
+	
+	color Out= color(color_intensity*sin(5.0*p[0])+color_intensity,color_intensity*sin(3.0*p[1])+color_intensity,color_intensity*sin(p[0]+p[1])+color_intensity);
+	float r = Out[0], g = Out[1], b = Out[2];
+	
+// ACES Output
+	if (aces == 0)
+	outColor = linearstep (0, 2, Out);
+	else
+	{
+	outColor = linearstep (0, 2, (transform(aces_tm, vector(r,g,b))));
+	}
+
+}

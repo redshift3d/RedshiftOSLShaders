@@ -1,0 +1,98 @@
+// OSL Shader by Tomás Atria based on http://glslsandbox.com/ examples
+// Modified by Saul Espinosa 7/15/2021 for Redshift 3d
+
+	float fract(float x)
+{
+    return (x - floor(x));
+}
+	shader candle_flame
+[[  string help = "Candle Flame for 2D Cards",
+    string label = "Candle Flame" ]]
+(
+	point Po = point(u,v,0),
+	
+	float Time = 1.0
+	[[	string label = "Time", float min = 0.0, float max = 1000.0]],
+	
+	int   aces = 0
+	[[ string widget = "checkBox",
+	string label = "ACES",
+	int connectable = 0 ]],
+	
+	output vector outColor = 0,
+)
+
+{
+	point pos = Po;
+	//NEW
+	pos = ( pos ) * 7.7-point(4.,5.,0.);
+	pos[1] = (pos[1]/.88);
+	if(pos[1]>-2.*4.2)
+	{
+	for(float baud = 1.; baud < 9.; baud += 1.)
+		{
+         pos[1] += 0.2*sin(4.20*Time/(1.+baud))/(1.+baud);
+         pos[0] += 0.1*cos(pos[1]/4.20+2.40*Time/(1.+baud))/(1.+baud);
+		//NEW
+		//pos[1] += 3.2*sin(16.*4.555*Time/(1.+baud))/(1.+baud*32);
+        //pos[0] += 0.03*cos(2.*Time/(1.+0.01*baud*cos(baud*baud)+pos[0]/4e3))/(1.+baud);
+		}
+	//pos[1] += 0.04*fract(sin(Time*60.));
+	//NEW
+	pos[0] += 0.04*mod((sin(Time*60.)),1.0);
+	}
+	vector col = vector(0.,0.,0.);
+	float p =.004;
+	float y = -pow(abs(pos[0]), 4.2)/p;
+	float dir = abs(pos[1] - y)*sin(.3);
+   //float dir = abs(pos[1] - y)*(0.01*sin(Time)+0.07);
+	if(dir < 0.7)
+{
+	//color.rg += smoothstep(0.,1.,.75-dir);   
+	//color.g /=2.4;
+	col[0] += smoothstep(0.0,1.,.75-dir);
+	col[1] += smoothstep(0.0,1.,.75-dir);
+	col[1] /=2.4;                          
+}
+	// ACES sRGB Transform
+	matrix aces_tm = matrix(
+		0.6131, 0.0701, 0.0206, 0,
+		0.3395, 0.9164, 0.1096, 0,
+		0.0474, 0.0135, 0.8698, 0,
+		0, 0, 0, 1);
+
+	col *= (0.2 + abs(pos[1]/4.2 + 4.2)/4.2);  
+	col += pow(col[0], 1.1);                 
+	col *= cos(-0.5+pos[1]*0.4);               
+	pos[1] += 1.5;
+	vector dolor = vector(0.,0.,0.0);
+	y = -pow(abs(pos[0]), 4.2)/(4.2*p)*4.2;   
+	dir = abs(pos[1] - y)*sin(1.1);           
+	if(dir < 0.7)
+	{
+		//dolor.bg += smoothstep(0., 1., .75-dir);
+		//dolor.g /=2.4;
+		dolor[2] += smoothstep(.0,1.,.75-dir);
+		dolor[1] += smoothstep(.0,1.,.75-dir);
+		dolor[1] /= 2.4;
+	}
+	dolor *= (0.2 + abs((pos[1]/4.2+4.2))/4.2);
+	dolor += pow(col[2],1.1);                 
+	dolor *= cos(-0.6+pos[1]*0.4);
+	dolor -= pow(length(dolor)/16., 0.5);
+	//col = (col+dolor)/2.;
+	//NEW
+	col = (col*0.6+dolor)/1.5;
+	
+	vector Out = vector(col);
+	
+	float r = Out[0], g = Out[1], b = Out[2];
+	
+	// ACES Output
+	if (aces == 0)
+	outColor = Out;
+	else
+	{
+	outColor = transform(aces_tm, vector(r,g,b));
+	}
+}
