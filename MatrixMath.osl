@@ -5,10 +5,7 @@ shader enums
 [[  string help = "Matrix Math Node",
     string label = "Matrix" ]]
 (
-    matrix input = matrix(1, 1, 1, 1,
-1, 1, 1, 1,
-1, 1, 1, 1,
-1, 1, 1, 1),
+    matrix input = 1,
 
 
     output color outColor = 1
