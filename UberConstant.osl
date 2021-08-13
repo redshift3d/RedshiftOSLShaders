@@ -1,0 +1,32 @@
+// Color Space Changes by Adrian Cruceru
+// Redshift Rendering Technologies 2021
+// Modified by Saul Espinosa 08-13-2021 to output multiple constants
+// This file is licensed under Apache 2.0 license
+
+shader changeSpace [[  string label    = "Uber Constant",
+     string category = "Color", string help = "Transforms from an OCIO color space to another and outputs constants" ]]
+(   // Input Color
+    color inColor = 0.5 [[ string label = "Input Color", string page = "Input Color"]],
+    // Color Spaces
+    string fromSpace = "" 
+    [[  string label = "Input Space", string widget = "colorspace", string page = "Color OCIO Colorspace"]],
+    string toSpace = "" 
+    [[  string label = "Output Space", string widget = "colorspace", string page = "Color OCIO Colorspace"]],
+	// Float Color
+    float inFloat = 0 [[ string label = "Input Float", string page = "Float", float min = 0, float max = 100]],	
+	// Vector Color
+    vector inVector = 0 [[ string label = "Input Vector", string page = "Vector"]],	
+	// Matrix Input
+	matrix inMatrix = 1 [[ string label = "Input Matrix", string page = "Matrix"]],
+    // Output
+    output color outColor = 0 [[    string label = "Out Color", string page = "Output" ]],
+	output float outFloat = 0 [[    string label = "Out Float", string page = "Output" ]],
+    output vector outVector = 0 [[    string label = "Out Vector", string page = "Output" ]],
+	output matrix outMatrix = 0 [[    string label = "Out Matrix", string page = "Output" ]]
+)
+{
+    outColor = transformc(fromSpace, toSpace, inColor);
+	outFloat = inFloat;
+	outVector = inVector;
+	outMatrix = inMatrix;
+}
