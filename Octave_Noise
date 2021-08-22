@@ -1,0 +1,72 @@
+// Created by Jerome Stephan (@jstephan828) 22/08/2021 for Redshift3D
+
+#include <vector2.h>
+#define vec2 vector2
+#define vec3 vector
+#include <vector4.h>
+#define vec4 vector4
+
+float fract(float x){return mod(x, 1.0);}
+vec3 fract(point x){return vec3(mod(x.x, 1.0),mod(x.y, 1.0),mod(x.z, 1.0)) ;}
+
+point matrix_mul(point matx, point maty, point matz, point px){
+    point result;
+    result.x = matx[0]*px.x+matx[1]*px.y+matx[2]*px.z;
+    result.y = maty[0]*px.x+maty[1]*px.y+maty[2]*px.z;
+    result.z = matz[0]*px.x+matz[1]*px.y+matz[2]*px.z;
+    return result;
+}
+
+float def_turbulence(point x, int octaves){
+    point px = x;
+    point mx = point( 1.6,  1.2, -1.2);
+    point my = point( -1.6,  1.5, 1.2);
+    point mz = point( 1.6,  -1.2, 1.8);
+    float f = 0.0;
+    float mixval = 0.5;
+    for(int i = 0; i < octaves; i++){
+    f += mixval*noise( px );
+    px = matrix_mul(mx, my, mz, px);
+    mixval/=2.;
+    }
+
+	return f;
+}
+
+shader octave_noise
+[[  string help = "3D Noise with Octaves",
+    string label = "Octave Noise" ]]
+(
+	point Po = P
+	[[	string label = "World Position" ]],
+
+	point PUVW = point(u,v,0)
+	[[	string label = "UVW Position" ]],
+
+    float Scale = 1.0
+	[[	string label = "Overall Scale", float min = 0.0, float max = 200.0]],
+
+	float Octaves = 5.0
+	[[	string label = "Octaves", float min = 1.0, float max = 8.0]],
+
+	int   Use_UVW = 0
+	[[ string widget = "checkBox",
+	string label = "Use UV Coordinates",
+	int connectable = 0 ]],
+
+	output color outColor = 0
+)
+
+{
+    point puv;
+    if(Use_UVW == 0){
+	puv = Po*Scale*0.01;
+	}
+	else{
+	puv = PUVW*Scale*2.;
+	}
+	color Out = color(def_turbulence(puv, int(Octaves)));
+
+	outColor = linearstep(0, 2, Out);
+
+}
