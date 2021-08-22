@@ -1,0 +1,115 @@
+// Created by Jerome Stephan (@jstephan828) 22/08/2021 for Redshift3D
+// Using colors based on https://github.com/redshift3d/RedshiftOSLShaders/blob/main/NoiseColor.osl
+
+#include <vector2.h>
+#define vec2 vector2
+#define vec3 vector
+#include <vector4.h>
+#define vec4 vector4
+
+float fract(float x){return mod(x, 1.0);}
+vec3 fract(point x){return vec3(mod(x.x, 1.0),mod(x.y, 1.0),mod(x.z, 1.0)) ;}
+
+point matrix_mul(point matx, point maty, point matz, point px){
+    point result;
+    result.x = matx[0]*px.x+matx[1]*px.y+matx[2]*px.z;
+    result.y = maty[0]*px.x+maty[1]*px.y+maty[2]*px.z;
+    result.z = matz[0]*px.x+matz[1]*px.y+matz[2]*px.z;
+    return result;
+}
+
+float def_turbulence(point x){
+    point px = x;
+    point mx = point( 1.6,  1.2, -1.2);
+    point my = point( -1.6,  1.5, 1.2);
+    point mz = point( 1.6,  -1.2, 1.8);
+    float f = 0.0;
+    f  = 0.5000*noise( px ); px = matrix_mul(mx, my, mz, px);
+    f += 0.2500*noise( px ); px = matrix_mul(mx, my, mz, px);
+    f += 0.1250*noise( px ); px = matrix_mul(mx, my, mz, px);
+    f += 0.0625*noise( px ); px = matrix_mul(mx, my, mz, px);
+    f += 0.0313*noise( px ); px = matrix_mul(mx, my, mz, px);
+
+	//f = 0.5 + 0.5*f;
+	return f;
+}
+
+shader layered_colors
+[[  string help = "Jawbreaker-like color layers",
+    string label = "Color Layers" ]]
+(
+	point Po = P
+	[[	string label = "Position" ]],
+
+	point Pcent = vec3(0)
+    [[string label = "Center"]],
+
+    float Scale = 1.0
+	[[	string label = "Overall Scale", float min = 0.0, float max = 20.0]],
+
+	float Time = 1.0
+	[[	string label = "Color Time", float min = 0.0, float max = 1000.0]],
+
+	float ColIntens = 1.5
+	[[	string label = "Color Brightness", float min = 0.0, float max = 10.0]],
+
+	float ColComplex = 1.0
+	[[	string label = "Color Complexity", float min = 0.0, float max = 5.0]],
+
+	float NoiseTime = 0.0
+	[[	string label = "Noise Time", float min = 0.0, float max = 10.0]],
+
+	float NoiseAmount = 8.0
+	[[	string label = "Noise Amount", float min = 0.0, float max = 80.0]],
+
+	float Layers = 15.0
+	[[	string label = "Layers", float min = 1.0, float max = 150.0]],
+
+	int   aces = 0
+	[[ string widget = "checkBox",
+	string label = "ACES",
+	int connectable = 0 ]],
+
+	output color outColor = 0
+)
+
+{
+	float Pi = 10.;
+	int   complexity      = 10;    // More points of color.
+	float fluid_speed     = 600.0;  // Drives speed, higher number will make it slower.
+	float color_intensity = ColIntens;
+	point puv = Po*Scale;
+	point p = Po*Scale;
+    p.x += (def_turbulence(p*0.1+NoiseTime)-0.5)*NoiseAmount;
+    p.y += (def_turbulence(p*0.1+NoiseTime+0.5)-0.5)*NoiseAmount;
+    p.z += (def_turbulence(p*0.1+NoiseTime+1.5)-0.5)*NoiseAmount;
+    float layers_adj = Layers/10.0;
+	float steps = floor(layers_adj*distance(Pcent, p));
+    steps = mix(steps, layers_adj*distance(Pcent, p), 0.2);
+
+	p = vec3(steps);
+	p+=noise(puv*0.005);
+	for(int i=1;i<complexity;i++){
+        point newp=p + Time*0.001;
+        newp[0]+=ColComplex*(0.6/float(i)*sin(float(i)*p[1]+Time/fluid_speed+2.3*float(i)) + 0.5);
+        newp[1]+=ColComplex*(0.6/float(i)*sin(float(i)*p[0]+Time/fluid_speed+0.3*float(i)) - 0.5);
+        p=newp;
+    }
+	color Out= color(color_intensity*sin(5.0*p[0])+color_intensity,color_intensity*sin(3.0*p[1])+color_intensity,color_intensity*sin((p[0]+p[1]))+color_intensity);
+	float r = Out[0], g = Out[1], b = Out[2];
+
+// ACES Output
+// ACES sRGB Transform
+	matrix aces_tm = matrix(
+		0.6131, 0.0701, 0.0206, 0,
+		0.3395, 0.9164, 0.1096, 0,
+		0.0474, 0.0135, 0.8698, 0,
+		0, 0, 0, 1);
+	if (aces == 0)
+	outColor = linearstep (0, 2, Out);
+	else
+	{
+	outColor = linearstep (0, 2, (transform(aces_tm, vector(r,g,b))));
+	}
+
+}
