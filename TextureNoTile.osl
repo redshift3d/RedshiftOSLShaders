@@ -42,44 +42,67 @@ shader NoTile
    string label = "Non-Tiling Bitmap Lookup",
    string URL   = "http://www.iquilezles.org/www/articles/texturerepetition/texturerepetition.htm" ]]
 (
-        point  uvw   = point(u,v,0)
+
+	// Texture Input
+		point  uvw   = point(u,v,0)
                 [[  string label= "UV Coordinate",
                         string help = "The 2D coordiante at which the texture is looked up." ]],
-        string Filename = "" [[ string widget="filename" ]],
+        string Filename = "" [[ string widget="filename", string page = "Image" ]],	
+		
+		string fromSpace = "" 
+		[[  string label = "Input Space", string widget = "colorspace", string page = "Image"]],
+		
+		string toSpace = "" 
+		[[  string label = "Output Space", string widget = "colorspace", string page = "Image"]],
+
+		float gainMul = 1
+		[[  string label = "Gain",
+	    string page = "Image",
+		float softmin = 0,
+		float softmax = 10,
+		float slidermin = 0,
+		float slidermax = 10,
+		float sensitivity = 0.001 ]],
+		
+	// Noise Options
         float  GradientScale = 2.0
             [[  float min = 0,
-                float max = 25
+                float max = 25,
+				string page = "Noise"
             ]],
         float  Offset = 1.0
             [[  float min = 0,
-                float max = 25
+                float max = 25,
+				string page = "Noise"
             ]],
         float  Rescale = 0.0
             [[  float min = 0,
-                float max = 25
+                float max = 25,
+				string page = "Noise"
             ]],
         float  Rotate  = 0.0
             [[  float min = -180,
-                float max = 180
+                float max = 180,
+				string page = "Noise"
             ]],
         int    LevelCount = 8
             [[  int min = 0,
-                int max = 25
+                int max = 25,
+				string page = "Noise"
             ]],
         int    Seed = 0
             [[  int min = 0,
-                int max = 100
+                int max = 100,
+				string page = "Noise"
             ]],
         int    Debug   = 0
                 [[  string widget = "checkBox",
-                        string help = "Shows the regions that are being mixed" ]],
+                        string help = "Shows the regions that are being mixed", string page = "Utility" ]],
         int    Bypass = 0
                 [[  string widget = "checkBox",
-                        string help = "Turns the effect off, to compare" ]],
-        float  ManualGamma = 2.2
-                [[ string label="Manual Gamma" ]],
+                        string help = "Turns the effect off, to compare", string page = "Utility" ]],
 
-        output color Col = 0
+        output color outColor = 0
 )
 {
         int s = Seed;
@@ -88,13 +111,9 @@ shader NoTile
         point Pos = select(vector(u,v,0), uvw, isconnected(uvw));
 
         if (Bypass)
-                Col = texture(Filename, Pos[0], 1.0 - Pos[1], "wrap", "periodic");
+                color Col = texture(Filename, Pos[0], 1.0 - Pos[1], "wrap", "periodic");
         else
                 Col = textureNoTile( Filename, Pos, GradientScale, Offset, Rescale, Rotate, LevelCount, Debug, s );
-
-        // Temporary workaround for color space issues
-        {
-                if (ManualGamma != 1.0)
-                        Col = pow(Col, ManualGamma);
-        }
+		
+				outColor = transformc( fromSpace, toSpace, Col) * gainMul;
 }
