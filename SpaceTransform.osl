@@ -1,0 +1,54 @@
+// Created by Saul Espinosa for Redshift 3D
+// Modified 01.11.2022
+
+shader SpaceTransform
+[[    string label = "Space Transform"]]
+(
+// Inputs
+vector Input = 0
+[[ string label = "Input", string page = "Input" ]],
+
+string Type = "point"
+[[  string label = "Input Type",
+	string page = "Input",
+    string widget = "popup",
+    string options  = "point|vector|normal"]],
+	
+string From = "world"
+[[  string label = "Input Space",
+	string page = "Transform",
+    string widget = "popup",
+    string options  = "world|object|camera|screen"]],
+	
+string To = "world"
+[[  string label = "Output Space",
+	string page = "Transform",
+    string widget = "popup",
+    string options  = "world|object|camera|screen"]],
+
+int Normalize = 0
+		[[ string widget = "checkBox",
+			string page = "Transform",
+			string label = "Normalize",
+			int connectable = 0 ]],
+	
+// Output	
+output vector Output = 0
+[[ string label = "Output", string page = "Output" ]],
+
+)
+{
+
+if (Normalize == 0)
+// Transform Input to Output
+if (Type == "point") Output = transform(From, To, point(Input));
+else if (Type == "normal") Output = transform(From, To, normal(Input));
+else Output = transform(From, To, Input);else
+{
+// Transform Input to Normalized Output
+if (Type == "point") Output = normalize(transform(From, To, point(Input)));
+else if (Type == "normal") Output = normalize(transform(From, To, normal(Input)));
+else Output = normalize(transform(From, To, Input));
+}
+
+}
