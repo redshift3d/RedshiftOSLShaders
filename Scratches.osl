@@ -2,12 +2,16 @@
 //
 // Author: John Su <cuckons@gmail.com>
 // Changes by Michael Abrahams <miabraha@gmail.com>
-// Last Modified 2/10/2021 for Redshift 3D + Metadata
+// Last Modified 1/11/2021 for Redshift 3D + Metadata & Triplaner
 // An OSL shader that generates texture to make swirly micro scratch look by
 // controlling the anistropy and roughness.
 // The original idea is from Hang Li(悬挂鲤) and Ben Paschke. Here I implemented
 // it using OSL and exposured some arts friendly parameters.
 
+float AxisMask(point axis, float power)
+{
+    return pow(abs(dot(N, axis)), power);
+}
 
 float lineDistance(point p, float direction){
     float theta = direction * M_2PI;
@@ -16,6 +20,59 @@ float lineDistance(point p, float direction){
     vector v = vector(c,s,0);
     float distance = length(p - (v * dot(v, p)));
     return distance;
+}
+
+void generateScratchPlane(point shading_p,
+                            int max_search_cell,
+                            point index,
+                            int seed,
+                            float delta,
+                            float hardScratches,
+                            float roughness_default,
+                            float roughness_min,
+                            float roughness_max,
+                            float anisotropic_min,
+                            float anisotropic_max,
+                            float scratchWidth,
+                             output float roughness, output float anisotropy, output float rotation, output float scratch)
+{
+    for (int x = -max_search_cell; x <= max_search_cell; ++x){
+        for (int y = -max_search_cell; y <= max_search_cell; ++y){
+
+            // Distance from line in neighbor cell
+            point line_cell_index = index + point(x, y, 0);
+            point scratch_origin_p = (line_cell_index + (hashnoise(line_cell_index + seed + .8) - 0.5)) * delta;
+            rotation = hashnoise(line_cell_index + seed + .88);
+            float dist = lineDistance(scratch_origin_p - shading_p, rotation);
+
+            // Randomize width
+            float width = scratchWidth * hashnoise(line_cell_index + seed + .888) / 2048;
+
+            // hard = 0-1 step function; soft = linear gradient
+            if (hardScratches) {
+                scratch = 1 - step(width, dist);
+            }
+            else {
+                scratch = 1 - min(dist / width, 1);
+            }
+
+            if (scratch)
+            {
+                roughness = select(
+                        roughness_default,
+                        mix(roughness_min, roughness_max, hashnoise(line_cell_index + seed + .8888)),
+                        scratch > 0
+                );
+                anisotropy = select(
+                        0,
+                        mix(anisotropic_min, anisotropic_max, hashnoise(line_cell_index + seed + .88888)),
+                        scratch > 0
+                );
+                rotation *= scratch;
+                return;
+            }
+        }
+    }
 }
 
 
@@ -71,6 +128,7 @@ shader Scratches
             string widget="number",
             float min=0,
             float max=1]],
+        float blendPower = 1,
     int seed=12345
         [[string label="Random Seed",
         string widget="number",
@@ -89,45 +147,43 @@ shader Scratches
     float delta = 1/max(density * density * scale, .1);
     int max_search_cell = (int)ceil(scratchLength);
 
-    // Scale works by changing the uv coordinates
-    point index = point(round(scale * u/delta), round(scale * v/delta), 0.0);
-    point shading_p = point(u, v , 0.0)*scale;
+    //XY
+    point xy = point(P[0], P[1], 0)*scale;
+    point xyIndex = point(round(scale * P[0]/delta), round(scale * P[1]/delta), 0.0);
+    float xyPlaneRoughness = 0;
+    float xyPlaneAnisotropy = 0;
+    float xyPlaneRotation = 0;
+    float xyPlaneScratch = 0;
+    generateScratchPlane(xy, max_search_cell, xyIndex, seed, delta, hardScratches, roughness_default, roughness_min, roughness_max, anisotropic_min, anisotropic_max, scratchWidth, xyPlaneRoughness, xyPlaneAnisotropy, xyPlaneRotation, xyPlaneScratch);
 
-    for (int x = -max_search_cell; x <= max_search_cell; ++x){
-        for (int y = -max_search_cell; y <= max_search_cell; ++y){
 
-            // Distance from line in neighbor cell
-            point line_cell_index = index + point(x, y, 0);
-            point scratch_origin_p = (line_cell_index + (hashnoise(line_cell_index + seed + .8) - 0.5)) * delta;
-            rotation = hashnoise(line_cell_index + seed + .88);
-            float dist = lineDistance(scratch_origin_p - shading_p, rotation);
+    //XZ
+    point xz = point(P[0], P[2], 0)*scale;
+    point xzIndex = point(round(scale * P[0]/delta), round(scale * P[2]/delta), 0.0);
+    float xzPlaneRoughness = 0;
+    float xzPlaneAnisotropy = 0;
+    float xzPlaneRotation = 0;
+    float xzPlaneScratch = 0;
+    generateScratchPlane(xz, max_search_cell, xzIndex, seed + 1, delta, hardScratches, roughness_default, roughness_min, roughness_max, anisotropic_min, anisotropic_max, scratchWidth, xzPlaneRoughness, xzPlaneAnisotropy, xzPlaneRotation, xzPlaneScratch);
 
-            // Randomize width
-            float width = scratchWidth * hashnoise(line_cell_index + seed + .888) / 2048;
 
-            // hard = 0-1 step function; soft = linear gradient
-            if (hardScratches) {
-                scratch = 1 - step(width, dist);
-            }
-            else {
-                scratch = 1 - min(dist / width, 1);
-            }
+    //YZ
+    point yz = point(P[1], P[2], 0)*scale;
+    point yzIndex = point(round(scale * P[1]/delta), round(scale * P[2]/delta), 0.0);
+    float yzPlaneRoughness = 0;
+    float yzPlaneAnisotropy = 0;
+    float yzPlaneRotation = 0;
+    float yzPlaneScratch = 0;
+    generateScratchPlane(yz, max_search_cell, yzIndex, seed + 2, delta, hardScratches, roughness_default, roughness_min, roughness_max, anisotropic_min, anisotropic_max, scratchWidth, yzPlaneRoughness, yzPlaneAnisotropy, yzPlaneRotation, yzPlaneScratch);
 
-            if (scratch)
-            {
-                roughness = select(
-                        roughness_default,
-                        mix(roughness_min, roughness_max, hashnoise(line_cell_index + seed + .8888)),
-                        scratch > 0
-                );
-                anisotropy = select(
-                        0,
-                        mix(anisotropic_min, anisotropic_max, hashnoise(line_cell_index + seed + .88888)),
-                        scratch > 0
-                );
-                rotation *= scratch;
-                return;
-            }
-        }
-    }
+
+    roughness = mix(xyPlaneRoughness, xzPlaneRoughness, AxisMask(point(0,1,0), blendPower));
+    anisotropy = mix(xyPlaneAnisotropy, xzPlaneAnisotropy, AxisMask(point(0,1,0), blendPower));
+    rotation = mix(xyPlaneRotation, xzPlaneRotation, AxisMask(point(0,1,0), blendPower));
+    scratch = mix(xyPlaneScratch, xzPlaneScratch, AxisMask(point(0,1,0), blendPower));
+
+    roughness = mix(roughness, yzPlaneRoughness, AxisMask(point(1,0,0), blendPower));
+    anisotropy = mix(anisotropy, yzPlaneAnisotropy, AxisMask(point(1,0,0), blendPower));
+    rotation = mix(rotation, yzPlaneRotation, AxisMask(point(1,0,0), blendPower));
+    scratch = mix(scratch, yzPlaneScratch, AxisMask(point(1,0,0), blendPower));
 }
