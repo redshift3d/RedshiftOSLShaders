@@ -64,7 +64,6 @@ shader jiWindowBox_Redshift
     float Hue = 0
     [[
     	int connectable = 0, 
-    	string widget = "null",
 		string page = "1 : Color Correct",
 		float min = 0,
 		float max = 1
@@ -73,7 +72,6 @@ shader jiWindowBox_Redshift
     float Saturation = 1
     [[
     	int connectable = 0, 
-    	string widget = "null",
 		string page = "1 : Color Correct",
 		float min = 0,
 		float max = 1,
@@ -82,7 +80,6 @@ shader jiWindowBox_Redshift
     float Value = 1
     [[
     	int connectable = 0, 
-    	string widget = "null",
 		string page = "1 : Color Correct",
 		float min = 0,
 		float max = 100

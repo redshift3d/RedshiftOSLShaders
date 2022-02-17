@@ -24,17 +24,17 @@ shader UberColorCorrect
 (
 	color Input = 0.18 [[string page = "Input"]],
 	
-	int   Bypass = 0          [[ string widget = "checkBox", string widget = "null", string page = "Input" ]],
+	int   Bypass = 0          [[ string widget = "checkBox", string page = "Input" ]],
 	float Overall = 1.0       [[ float min = 0.0, float max = 1.0, string page = "Input" ]],
 	
 	
-	int   HueRange = 0        [[ string widget = "checkBox", string widget = "null", string page = "Hue Ranges" ]],
+	int   HueRange = 0        [[ string widget = "checkBox", string page = "Hue Ranges" ]],
 	
 	color AffectHue = color(1.0, 0.4, 0.3) [[string page = "Hue Ranges"]],
 	float HueRangeWidth    = 10  [[ float min = 0.0, float max = 360, float step = 1.0, string page = "Hue Ranges" ]],
 	float HueRangeSoftness = 10  [[ float min = 0.0, float max = 360, float step = 1.0, string page = "Hue Ranges" ]],
 		
-	int   ChannelMapping = 0  [[ string widget = "checkBox", string widget = "null", string page = "Channels" ]],	
+	int   ChannelMapping = 0  [[ string widget = "checkBox", string page = "Channels" ]],	
 
 	int   RedMapping   = 0 
 		[[ 
@@ -62,7 +62,7 @@ shader UberColorCorrect
 		      "Red (Inverse):3|Green (Inverse):4|Blue (Inverse):5|"
 		      "Luminance:6|Luminance (Inverse):7|Zero:8|One:9" ]],	
 
-	int   BrightnessAdjustment = 1 [[ string widget = "checkBox", string widget = "null", string page = "Value Adjustments" ]],	
+	int   BrightnessAdjustment = 1 [[ string widget = "checkBox", string page = "Value Adjustments" ]],	
 	int   Invert          = 0 [[ string widget = "checkBox", int connectable=0, string page = "Value Adjustments" ]],
 	float Brightness      = 1.0 [[string page = "Value Adjustments"]],
 	float Contrast        = 1.0 [[string page = "Value Adjustments"]],

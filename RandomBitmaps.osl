@@ -23,7 +23,7 @@ shader RandomBitmaps
    string version = "2.0.0",
    string label = "Randomized Bitmaps", string page = "0 : General" ]]
 (
-	int   Layers   = 1 [[ int min=1, int max=9, int connectable=0, string widget = "null", string page = "0 : General" ]],
+	int   Layers   = 1 [[ int min=1, int max=9, int connectable=0, string page = "0 : General" ]],
 	
 	vector UVW = vector(u,v,0) [[string page = "3 : Other"]],
 	float  Scale = 1.0 [[ float min = 0, float max = 2, string label = "Overall Scale", string page = "0 : General" ]],

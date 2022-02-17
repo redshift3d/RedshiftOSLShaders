@@ -49,7 +49,6 @@ shader Flakes
 	// Inputs
 	float scale = 0.2
 	[[
-		string widget = "null",
 		int connectable = 0,
 		float min = 0.0,
 		float max = 25.0,
@@ -59,7 +58,6 @@ shader Flakes
 	
 	float Density = 1.0
 	[[
-		string widget = "null",
 		int connectable = 0,
 		float min = 0.0,
 		float max = 1.0,
@@ -70,7 +68,6 @@ shader Flakes
 	
 	float Randomize = 0.5
 	[[
-		string widget = "null",
 		int connectable = 0,
 		float min = 0.0,
 		float max = 1.0,
@@ -82,7 +79,6 @@ shader Flakes
 	
 	int seed = 42
 	[[
-		string widget = "null",
 		int connectable = 0,
 		int min = 0,
 		int max = 100,
@@ -93,7 +89,6 @@ shader Flakes
 	[[
 		string widget = "checkBox",
 		string label = "Seamless Tiling",
-		string widget = "null",
 		int connectable = 0,
 		string help =	"<ul><br><br><li>Plug the Flake Shader directly into the Physical Materials diffuse slot</li>"
 						"<br><li>Make a square plane, 100x100/250x250/etc.</li>"
@@ -106,7 +101,6 @@ shader Flakes
 	
 	int tileSize = 10
 	[[
-		string widget = "null",
 		int min = 10,
 		int max = 50,
 		int connectable = 0, 
