@@ -1,0 +1,226 @@
+shader UberScalarMath (
+    int operation = 0
+    [[
+        string label = "Operation",
+        string widget = "popup",
+        string options = "\
+        Add|Subtract|Multiply|Divide|Multiply Add|Power|Logarithm|Square Root|\
+        Inverse Square Root|Absolute|Exponent|Minimum|Maximum|Less Than|\
+        Greater Than|Sign|Compare|Round|Floor|\
+        Ceil|Truncate|Fraction|Modulo|Wrap|Snap|Ping-Pong|Sine|Cosine|Tangent|\
+        Arcsine|Arccosine|Arctangent|Arctan2|Hyperbolic Sine|Hyperbolic Cosine|\
+        Hyperbolic Tangent|To Radians|To Degrees"
+    ]],
+    float input1 = 0.0
+    [[
+        float min = -1000.0,
+        float max = 1000.0,
+        float sensitivity = 0.1
+    ]],
+    float input2 = 0.0
+    [[
+        float min = -1000.0,
+        float max = 1000.0,
+        float sensitivity = 0.1
+    ]],
+    float input3 = 0.0
+    [[
+        float min = -1000.0,
+        float max = 1000.0,
+        float sensitivity = 0.1
+    ]],
+    output float Out = 0.0,
+) {
+    // Add
+    // input1 = Value 1, input2 = Value 2
+    if (operation == 0) {
+        Out = input1 + input2;
+    }
+    //Subtract
+    // input1 = Value 1, input2 = Value 2
+    else if (operation == 1) {
+        Out = input1 - input2;
+    }
+    // Multiply
+    // input1 = Value 1, input2 = Value 2
+    else if (operation == 2) {
+        Out = input1 * input2;
+    }
+    // Divide
+    // input1 = Value 1, input2 = Value 2
+    else if (operation == 3) {
+        Out = input1 / input2;
+    }
+    // Multiply Add
+    // input1 = Value, input2 = Multiplier, input3 = Addend
+    else if (operation == 4) {
+        float temp = input1 * input2;
+        Out = input3 + temp;
+    }
+    // Power
+    // input1 = Base, input2 = Exponent
+    else if (operation == 5) {
+        Out = pow(input1, input2);
+    }   
+    // Logarithm
+    // input1 = Value, input2 = Base
+    else if (operation == 6) {
+        Out = log(input1, input2);
+    }   
+    // Square Root
+    // input1 = Value
+    else if (operation == 7) {
+        Out = sqrt(input1);
+    }   
+    // Inverse Square Root
+    // input1 = Value
+    else if (operation == 8) {
+        Out = inversesqrt(input1);
+    }   
+    // Absolute
+    // input1 = Value
+    else if (operation == 9) {
+        Out = abs(input1);
+    }   
+    // Exponent
+    // input1 = Value
+    else if (operation == 10) {
+        Out = exp(input1);
+    }   
+    // Minimum
+    // input1 = Value 1, input2 = Value 2
+    else if (operation == 11) {
+        Out = min(input1, input2);
+    }   
+    // Maximum
+    // input1 = Value 1, input2 = Value 2
+    else if (operation == 12) {
+        Out = max(input1, input2);
+    }   
+    // Less Than
+    // input1 = Value, input2 = Threshold
+    else if (operation == 13) {
+        Out = select(1.0, 0.0, input1 < input2);
+    }   
+    // Greater Than
+    // input1 = Value, input2 = Threshold
+    else if (operation == 14) {
+        Out = select(1.0, 0.0, input1 > input2);
+    }   
+    // Sign
+    // input1 = Value
+    else if (operation == 15) {
+        Out = sign(input1);
+    }   
+    // Compare
+    // input1 = Value 1, input2 = Value 2, input3 = Epsilon
+    else if (operation == 16) {
+        Out = select(1.0, 0.0, (input1 - input2) <= input3);
+    }
+    // Round
+    // input1 = Value
+    else if (operation == 17) {
+        Out = round(input1);
+    }
+    // Floor
+    // input1 = Value
+    else if (operation == 18) {
+        Out = floor(input1);
+    }
+    // Ceil
+    // input1 = Value
+    else if (operation == 19) {
+        Out = ceil(input1);
+    }
+    // Truncate
+    // input1 = Value
+    else if (operation == 20) {
+        Out = trunc(input1);
+    }
+    // Fraction
+    // input1 = Value
+    else if (operation == 21) {
+        float temp = trunc(input1);
+        Out = input1 - temp;
+    }
+    // Modulo
+    // input1 = Value 1, input2 = Value 2
+    else if (operation == 22) {
+        Out = mod(input1, input2);
+    }
+    // Wrap
+    // input1 = Value, input2 = Min, input3 = Max
+    else if (operation == 23) {
+        Out = fmod(((fmod((input1 - input2), (input3 - input2))) + (input3 - input2)), (input3 - input2)) + input2;
+    }
+    // Snap
+    // input1 = Value, input2 = Increment
+    else if (operation == 24) {
+        Out = (input1 + (input2 / 2)) - fmod((input1 + (input2 / 2)), input2);
+    }
+    // Ping-Pong
+    // input1 = Value, input2 = Scale
+    else if (operation == 25) {
+        Out = 0.0 + fabs(fmod((input1 + input2), (input2 * 2)) - input2);
+    }
+    // Sine
+    // input1 = Value
+    else if (operation == 26) {
+        Out = sin(input1);
+    }
+    // Cosine
+    // input1 = Value
+    else if (operation == 27) {
+        Out = cos(input1);
+    }
+    // Tangent
+    // input1 = Value
+    else if (operation == 28) {
+        Out = tan(input1);
+    }
+    // Arcsine
+    // input1 = Value
+    else if (operation == 29) {
+        Out = asin(input1);
+    }
+    // input1 = Value
+    // Arccosine
+    else if (operation == 30) {
+        Out = acos(input1);
+    }
+    // Arctangent
+    // input1 = Value
+    else if (operation == 31) {
+        Out = atan(input1);
+    }
+    // Arctan2
+    // input1 = Value 1, input2 = Value 2
+    else if (operation == 32) {
+        Out = atan2(input1, input2);
+    }
+    // Hyperbolic Sine
+    // input1 = Value
+    else if (operation == 33) {
+        Out = sinh(input1);
+    }
+    // Hyperbolic Cosine
+    // input1 = Value
+    else if (operation == 34) {
+        Out = cosh(input1);
+    }
+    // Hyperbolic Tangent
+    // input1 = Value
+    else if (operation == 35) {
+        Out = tanh(input1);
+    }
+    // To Radians
+    // input1 = Value
+    else if (operation == 36) {
+        Out = radians(input1);
+    }
+    // To Degrees
+    // input1 = Value
+    else if (operation == 37) {
+        Out = degrees(input1);
+    }
+}

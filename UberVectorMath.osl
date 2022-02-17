@@ -1,0 +1,167 @@
+shader UberScalarMath (
+    int operation = 0
+    [[
+        string label = "Operation",
+        string widget = "popup",
+        int connectable = 0,
+        string options = "\
+        Add|Subtract|Multiply|Divide|Multiply Add|Cross Product|Project|\
+        Reflect|Refract|Faceforward|Dot Product|Distance|Length|Scale|\
+        Normalize|Wrap|Snap|Floor|Ceil|Modulo|Fraction|Absolute|Minimum|\
+        Maximum|Sine|Cosine|Tangent"
+    ]],
+    vector input1 = 0.0
+    [[
+        vector min = -1000.0,
+        vector max = 1000.0
+    ]],
+    vector input2 = 0.0
+    [[
+        vector min = -1000.0,
+        vector max = 1000.0
+    ]],
+    vector input3 = 0.0
+    [[
+        vector min = -1000.0,
+        vector max = 1000.0
+    ]],
+    output vector Out = color(0.0, 0.0, 0.0),
+) {
+    // Add
+    // input1 = Value 1, input2 = Value 2
+    if (operation == 0) {
+        Out = input1 + input2;
+    }
+    //Subtract
+    // input1 = Value 1, input2 = Value 2
+    else if (operation == 1) {
+        Out = input1 - input2;
+    }
+    // Multiply
+    // input1 = Value 1, input2 = Value 2
+    else if (operation == 2) {
+        Out = input1 * input2;
+    }
+    // Divide
+    // input1 = Value 1, input2 = Value 2
+    else if (operation == 3) {
+        Out = input1 / input2;
+    }
+    // Multiply Add
+    // input1 = Value, input2 = Multiplier, input3 = Addend
+    else if (operation == 4) {
+        vector temp = input1 * input2;
+        Out = input3 + temp;
+    }
+    // Cross Product
+    // input1 = Value 1, input2 = Value 2
+    else if (operation == 5) {
+        Out = cross(input1, input2);
+    }   
+    // Project
+    // input1 = Vector to project, input2 = Vector to project on
+    else if (operation == 6) {
+        Out = (dot(input1, input2) / pow(length(input2), 2)) * input2;
+    }   
+    // Reflect
+    // input1 = Incident Vector, input2 = Surface Orientation (normalized)
+    else if (operation == 7) {
+        Out = reflect(input1, normalize(input2));
+    }   
+    // Refract
+    // input1 = Incident Vector, input2 = Surface Orientation, input3 = IOR
+    else if (operation == 8) {
+        Out = refract(input1, input2, input3[0]);
+    }   
+    // Faceforward
+    // input1 = Value, input2 = Incident Vector, input3 = Reference Normal
+    else if (operation == 9) {
+        Out = faceforward(input1, input2, input3);
+    }   
+    // Dot Product
+    // input1 = Value 1, input2 = Value 2
+    else if (operation == 10) {
+        Out = dot(input1, input2);
+    }   
+    // Distance
+    // input1 = Value 1, input2 = Value 2
+    else if (operation == 11) {
+        Out = distance(input1, input2);
+    }   
+    // Length
+    // input1 = Value 1
+    else if (operation == 12) {
+        Out = length(input1);
+    }   
+    // Scale
+    // input1 = Value, input2 = Scale (Float)
+    else if (operation == 13) {
+        Out = input1 * input2;
+    }   
+    // Normalize
+    // input1 = Value
+    else if (operation == 14) {
+        Out = normalize(input1);
+    }   
+    // Wrap
+    // input1 = Value, input2 = Min, input3 = Max
+    else if (operation == 15) {
+        Out = fmod(((fmod((input1 - input2), (input3 - input2))) + (input3 - input2)), (input3 - input2)) + input2;
+    }   
+    // Snap
+    // input1 = Value, input2 = Increment
+    else if (operation == 16) {
+        Out = (input1 + (input2 / 2)) - fmod((input1 + (input2 / 2)), input2);
+    }
+    // Floor
+    // input1 = Value
+    else if (operation == 17) {
+        Out = floor(input1);
+    }
+    // Ceil
+    // input1 = Value
+    else if (operation == 18) {
+        Out = ceil(input1);
+    }
+    // Modulo
+    // input1 = Value 1, input2 = Value 2
+    else if (operation == 19) {
+        Out = mod(input1, input2);
+    }
+    // Fraction
+    // input1 = Value
+    else if (operation == 20) {
+        vector temp = trunc(input1);
+        Out = input1 - temp;
+    }
+    // Absolute
+    // input1 = Value
+    else if (operation == 21) {
+        Out = abs(input1);
+    }
+    // Minimum
+    // input1 = Value 1, input2 = Value 2
+    else if (operation == 22) {
+        Out = min(input1, input2);
+    }
+    // Maximum
+    // input1 = Value 1, input2 = Value 2
+    else if (operation == 23) {
+        Out = max(input1, input2);
+    }
+    // Sine
+    // input1 = Value
+    else if (operation == 24) {
+        Out = sin(input1);
+    }
+    // Cosine
+    // input1 = Value
+    else if (operation == 25) {
+        Out = cos(input1);
+    }
+    // Tangent
+    // input1 = Value
+    else if (operation == 26) {
+        Out = tan(input1);
+    }
+}
