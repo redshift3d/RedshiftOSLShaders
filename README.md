@@ -5,7 +5,7 @@ A collection of [Open Shading Language (OSL)](https://github.com/AcademySoftware
 ### Links
 
 - [redshift3d/RedshiftOSLShaders GitHub Repo](https://github.com/redshift3d/RedshiftOSLShaders)
-- [Redshift OSL Support - Open Beta | Redshift Forums](https://redshift.maxon.net/topic/34323/redshift-osl-support-open-beta)
+- [Bugs (Redshift/OSL) | Redshift Forums](https://redshift.maxon.net/category/41/bugs-redshift-osl)
 
 ## Shaders
 
