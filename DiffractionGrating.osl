@@ -1,9 +1,9 @@
-// Modified 3/02/22 by Saul Espinosa for Redshift3d
-// Psuedo Diffraction Grating Shader using 3 shifted RGB Microfacets
+// Modified 3/03/22 by Saul Espinosa for Redshift3d
+// Psuedo Diffraction Grating Uber Shader using 3 shifted RGB Microfacets
 
 shader DiffractionGrating
 [[  string help = "Psuedo Diffraction Grating Material",
-    string label = "Diffraction Gratting" ]]
+    string label = "Diffraction Grating" ]]
 (
 	color diffuse_color = 0.025
 		[[
@@ -22,43 +22,72 @@ shader DiffractionGrating
 			string page = "Diffuse",
 			float min = 0, float max = 1
 		]],
+
+// Refraction Layer
+	color refract_color = color(1.0)
+		[[
+		string label = "Refraction Color",
+		string page = "Refraction",
+		]],
+	float refract_weight = 0.0
+		[[
+		string label = "Refraction Weight" ,
+		string page = "Refraction",
+		float min = 0, float max = 1
+		]],
+	float refract_roughness = 0.0
+		[[
+		string label = "Refraction Roughness" ,
+		string page = "Refraction",
+		float min = 0, float max = 1
+		]],
+	float refract_IOR = 1.5
+		[[
+		string label = "Refraction IOR" ,
+		string page = "Refraction",
+		float min = 0, float max = 25
+		]],
+
+// Diffraction
 	float diffraction_weight = 1.0
 		[[
 			string label = "Diffraction Weight" ,
 			string page = "Diffraction",
 			float min = 0, float max = 1
 		]],
-    float roughness = 0.3
+    float roughness = 0.5
         [[
             string label = "Roughness" ,
             string page = "Diffraction",
             float min = 0, float max = 1
         ]],
-    float separation = 0.2
+    float separation = 0.9
         [[
             string label = "Separation" ,
             string page = "Diffraction",
             float min = 0, float max = 1
         ]],
-    float anisotropy = 0.8
+    float anisotropy = 0.45
         [[
             string label = "Anisotropy" ,
             string page = "Diffraction",
             float min = -1, float max = 1
         ]],
-    	float rotation = 0.0
+    	float rotation = 0.3
 		[[
 			string label = "Rotation" ,
 			string page = "Diffraction",
             float min = 0, float max = 1
 		]],
-	float IOR = 1.52
+	float IOR = 1.6
 		[[
 			string page = "Diffraction",
 			string label = "Diffraction IOR",
 			float min =  1,
 			float max = 5
 		]],
+
+
 
 // Coating Layer
 	color coat_color = color(1.0)
@@ -105,10 +134,11 @@ shader DiffractionGrating
     float y_alpha = mix(roughness * 2, 0.001, a);
 
 	closure color diffuseBRDF = diffuse_color * diffuse_weight * oren_nayar(Normal, diffuse_roughness);
+	closure color refractionBSDF = refract_color * refract_weight * microfacet("ggx", Normal, refract_roughness, refract_IOR, 1);
 	closure color microfacetR = microfacet("ggx", Normal, delta - rot, x_alpha, y_alpha, IOR, 0) * color(1,0,0);
 	closure color microfacetG = microfacet("ggx", Normal, rot, x_alpha, y_alpha, IOR, 0) * color(0,1,0);
 	closure color microfacetB = microfacet("ggx", Normal, delta + rot, x_alpha, y_alpha, IOR, 0) * color(0,0,1);
 	closure color coat_layer = coat_color * coat_weight * microfacet("ggx", Normal, coat_roughness, coat_IOR, 0);
-    outColor = diffuseBRDF + (diffraction_weight * (microfacetR + microfacetG + microfacetB)) + coat_layer;
+    outColor = diffuseBRDF + refractionBSDF + (diffraction_weight * (microfacetR + microfacetG + microfacetB)) + coat_layer;
 
 }
