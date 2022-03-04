@@ -9,260 +9,305 @@ A collection of [Open Shading Language (OSL)](https://github.com/AcademySoftware
 
 ## Shaders
 
-### ACESGamutConvert
+### ACES Gamut Convert
 
-![](ACESGamutConvert.jpg)
-[ACESGamutConvert.osl](ACESGamutConvert.osl)
+![](ACESGamutConvert.jpg)  
+
+- [ACESGamutConvert.osl 📝](ACESGamutConvert.osl)
 
 ### Blackbody
 
-![](Blackbody.jpg)
-[Blackbody.osl](Blackbody.osl)
+![](Blackbody.jpg)  
 
-### Candle_Flame
+- [Blackbody.osl 📝](Blackbody.osl)
 
-![](Candle_Flame.jpg)
-[Candle_Flame.osl](Candle_Flame.osl)
+### Candle Flame
+
+![](CandleFlame.jpg)  
+
+- [CandleFlame.osl 📝](CandleFlame.osl)
 
 ### Clamp
 
-![](Clamp.jpg)
-[Clamp.osl](Clamp.osl)
+![](Clamp.jpg)  
 
-### ColorKeyer
+- [Clamp.osl 📝](Clamp.osl)
 
-![](ColorKeyer.jpg)
-[ColorKeyer.osl](ColorKeyer.osl)
+### Color Keyer
 
-### ColorShuffle
+![](ColorKeyer.jpg)  
 
-[ColorShuffle.osl](ColorShuffle.osl)
+- [ColorKeyer.osl 📝](ColorKeyer.osl)
 
-### DegreesToRadians
+### Color Shuffle
 
-[DegreesToRadians.osl](DegreesToRadians.osl)
+- [ColorShuffle.osl 📝](ColorShuffle.osl)
 
-### DiffractionGrating
+### Degrees To Radians
 
-![](DiffractionGrating.jpg)
-[DiffractionGrating.osl](DiffractionGrating.osl)
+- [DegreesToRadians.osl 📝](DegreesToRadians.osl)
+
+### Diffraction Grating
+
+![](DiffractionGrating.jpg)  
+
+- [DiffractionGrating.osl 📝](DiffractionGrating.osl)
 
 ### Dots
 
-![](Dots.jpg)
-[Dots.osl](Dots.osl)
+![](Dots.jpg)  
 
-### EnvironmentGradient
+- [Dots.osl 📝](Dots.osl)
 
-![](EnvironmentGradient.jpg)
-[EnvironmentGradient.osl](EnvironmentGradient.osl)
+### Environment Gradient
 
-### FakeCaustics
+![](EnvironmentGradient.jpg)  
 
-![](FakeCaustics.jpg)
-[FakeCaustics.osl](FakeCaustics.osl)
+- [EnvironmentGradient.osl 📝](EnvironmentGradient.osl)
+
+### Fake Caustics
+
+![](FakeCaustics.jpg)  
+
+- [FakeCaustics.osl 📝](FakeCaustics.osl)
 
 ### Flakes
 
-![](Flakes.jpg)
-[Flakes.osl](Flakes.osl)
+![](Flakes.jpg)  
 
-### HDRIEnviron
+- [Flakes.osl 📝](Flakes.osl)
 
-![](HDRIEnviron.jpg)
-[HDRIEnviron.osl](HDRIEnviron.osl)
+### HDRI Environ
 
-### HSVsplitter
+![](HDRIEnviron.jpg)  
 
-[HSVsplitter.osl](HSVsplitter.osl)
+- [HDRIEnviron.osl 📝](HDRIEnviron.osl)
 
-### HagelslagNoise
+### HS Vsplitter
 
-[HagelslagNoise.osl](HagelslagNoise.osl)
+- [HSVsplitter.osl 📝](HSVsplitter.osl)
+
+### Hagelslag Noise
+
+- [HagelslagNoise.osl 📝](HagelslagNoise.osl)
 
 ### Halftone
 
-[Halftone.osl](Halftone.osl)
+- [Halftone.osl 📝](Halftone.osl)
 
 ### Hexagon
 
-![](Hexagon.jpg)
-[Hexagon.osl](Hexagon.osl)
+![](Hexagon.jpg)  
+
+- [Hexagon.osl 📝](Hexagon.osl)
 
 ### Iridescence
 
-![](Iridescence.jpg)
-[Iridescence.osl](Iridescence.osl)
+![](Iridescence.jpg)  
 
-### JawbreakerNoise
+- [Iridescence.osl 📝](Iridescence.osl)
 
-![](JawbreakerNoise.jpg)
-[JawbreakerNoise.osl](JawbreakerNoise.osl)
+### Jawbreaker Noise
 
-### JiWindowBox_Redshift
+![](JawbreakerNoise.jpg)  
 
-![](JiWindowBox_Redshift.jpg)
-[JiWindowBox_Redshift.osl](JiWindowBox_Redshift.osl)
+- [JawbreakerNoise.osl 📝](JawbreakerNoise.osl)
 
-JiWindowBox_template_Examples_Redshift.zip
+### Ji Window Box
+
+![](JiWindowBox.jpg)  
+
+- [JiWindowBox.osl 📝](JiWindowBox.osl)
+- [JiWindowBox_Examples.zip 📦](JiWindowBox_Examples.zip)
 
 ### Jitter
 
-![](Jitter.jpg)
-[Jitter.osl](Jitter.osl)
+![](Jitter.jpg)  
 
-### LiftGammaGain
+- [Jitter.osl 📝](Jitter.osl)
 
-![](LiftGammaGain.jpg)
-[LiftGammaGain.osl](LiftGammaGain.osl)
+### Lift Gamma Gain
 
-Luma_Shader.osl
+![](LiftGammaGain.jpg)  
 
-### MarbleShader
+- [LiftGammaGain.osl 📝](LiftGammaGain.osl)
 
-![](MarbleShader.jpg)
-[MarbleShader.osl](MarbleShader.osl)
+### Luma
+
+- [Luma_Shader.osl 📝](Luma_Shader.osl)
+
+### Marble Shader
+
+![](MarbleShader.jpg)  
+
+- [MarbleShader.osl 📝](MarbleShader.osl)
 
 ### Matcap
 
-![](Matcap.jpg)
-[Matcap.osl](Matcap.osl)
+![](Matcap.jpg)  
 
-MatrixMath.osl
+- [Matcap.osl 📝](Matcap.osl)
 
-### MelaninColor
+### Matrix Math
 
-![](MelaninColor.jpg)
-[MelaninColor.osl](MelaninColor.osl)
+- [MatrixMath.osl 📝](MatrixMath.osl)
 
-### NishitaSky
+### Melanin Color
 
-![](NishitaSky.jpg)
-[NishitaSky.osl](NishitaSky.osl)
+![](MelaninColor.jpg)  
 
-### NoiseColor
+- [MelaninColor.osl 📝](MelaninColor.osl)
 
-![](NoiseColor.jpg)
-[NoiseColor.osl](NoiseColor.osl)
+### Nishita Sky
 
-### PaintColors
+![](NishitaSky.jpg)  
 
-![](PaintColors.jpg)
-[PaintColors.osl](PaintColors.osl)
+- [NishitaSky.osl 📝](NishitaSky.osl)
 
-### ParallaxOcclusionMapping
+### Noise Color
 
-![](ParallaxOcclusionMapping.jpg)
-[ParallaxOcclusionMapping.osl](ParallaxOcclusionMapping.osl)
+![](NoiseColor.jpg)  
+
+- [NoiseColor.osl 📝](NoiseColor.osl)
+
+### Paint Colors
+
+![](PaintColors.jpg)  
+
+- [PaintColors.osl 📝](PaintColors.osl)
+
+### Parallax Occlusion Mapping
+
+![](ParallaxOcclusionMapping.jpg)  
+
+- [ParallaxOcclusionMapping.osl 📝](ParallaxOcclusionMapping.osl)
 
 ### Posterize
 
-![](Posterize.jpg)
-[Posterize.osl](Posterize.osl)
+![](Posterize.jpg)  
 
-### Radians to Degress
+- [Posterize.osl 📝](Posterize.osl)
 
-[RadiansToDegrees.osl](RadiansToDegrees.osl)
+### README
 
-### RandomBitmaps
+### Radians To Degrees
 
-![](RandomBitmaps.jpg)
-[RandomBitmaps.osl](RandomBitmaps.osl)
+- [RadiansToDegrees.osl 📝](RadiansToDegrees.osl)
+
+### Random Bitmaps
+
+![](RandomBitmaps.jpg)  
+
+- [RandomBitmaps.osl 📝](RandomBitmaps.osl)
 
 ### Scratches
 
-![](Scratches.jpg)
-[Scratches.osl](Scratches.osl)
+![](Scratches.jpg)  
+
+- [Scratches.osl 📝](Scratches.osl)
 
 ### Shapes
 
-![](Shapes.jpg)
-[Shapes.osl](Shapes.osl)
+![](Shapes.jpg)  
 
-### SimpleTiles
+- [Shapes.osl 📝](Shapes.osl)
 
-![](SimpleTiles.jpg)
-[SimpleTiles.osl](SimpleTiles.osl)
+### Simple Tiles
 
-### SlopeMask
+![](SimpleTiles.jpg)  
 
-![](SlopeMask.jpg)
-[SlopeMask.osl](SlopeMask.osl)
+- [SimpleTiles.osl 📝](SimpleTiles.osl)
+
+### Slope Mask
+
+![](SlopeMask.jpg)  
+
+- [SlopeMask.osl 📝](SlopeMask.osl)
 
 ### Space Transform
 
-[SpaceTransform.osl](SpaceTransform.osl)
+- [SpaceTransform.osl 📝](SpaceTransform.osl)
 
 ### Starfield
 
-![](Starfield.jpg)
-[Starfield.osl](Starfield.osl)
+![](Starfield.jpg)  
 
-### SubstanceFlow
+- [Starfield.osl 📝](Starfield.osl)
 
-![](SubstanceFlow.jpg)
-[SubstanceFlow.osl](SubstanceFlow.osl)
+### Substance Flow
 
-### TextureNoTile
+![](SubstanceFlow.jpg)  
 
-![](TextureNoTile.jpg)
-[TextureNoTile.osl](TextureNoTile.osl)
+- [SubstanceFlow.osl 📝](SubstanceFlow.osl)
 
-### TextureNoTile_Example
+### Texture No Tile
 
-![](TextureNoTile_Example.jpg)
+![](TextureNoTile.jpg)  
+
+- [TextureNoTile.osl 📝](TextureNoTile.osl)
 
 ### Thin Film Interference
 
-![](ThinFilmInterference.jpg)
-[ThinFilmInterference.osl](ThinFilmInterference.osl)
+![](ThinFilmInterference.jpg)  
 
-### TooledSteel
+- [ThinFilmInterference.osl 📝](ThinFilmInterference.osl)
 
-![](TooledSteel.jpg)
-[TooledSteel.osl](TooledSteel.osl)
+### Tooled Steel
 
-### TurbulentColor
+![](TooledSteel.jpg)  
 
-![](TurbulentColor.jpg)
-[TurbulentColor.osl](TurbulentColor.osl)
+- [TooledSteel.osl 📝](TooledSteel.osl)
 
-### UVWTransform
+### Turbulent Color
 
-![](UVWTransform.jpg)
-[UVWTransform.osl](UVWTransform.osl)
+![](TurbulentColor.jpg)  
 
-### UberColorCorrect.png
+- [TurbulentColor.osl 📝](TurbulentColor.osl)
 
-![](UberColorCorrect.png)
-[UberColorCorrect.osl](UberColorCorrect.osl)
+### UVW Transform
 
-### UberConstant.jpg
+![](UVWTransform.jpg)  
 
-![](UberConstant.jpg)
-[UberConstant.osl](UberConstant.osl)
+- [UVWTransform.osl 📝](UVWTransform.osl)
 
-### UberScalar
+### Uber Color Correct
 
-![](UberScalar.jpg)
-[UberScalarMath.osl](UberScalarMath.osl)
+![](UberColorCorrect.png)  
 
-### UverVector
+- [UberColorCorrect.osl 📝](UberColorCorrect.osl)
 
-![](UverVector.jpg)
-[UberVectorMath.osl](UberVectorMath.osl)
+### Uber Constant
+
+![](UberConstant.jpg)  
+
+- [UberConstant.osl 📝](UberConstant.osl)
+
+### Uber Scalar Math
+
+![](UberScalarMath.jpg)  
+
+- [UberScalarMath.osl 📝](UberScalarMath.osl)
+
+### Uber Vector Math
+
+![](UberVectorMath.jpg)  
+
+- [UberVectorMath.osl 📝](UberVectorMath.osl)
 
 ### Wavelength
 
-![](Wavelength.jpg)
-[Wavelength.osl](Wavelength.osl)
+![](Wavelength.jpg)  
+
+- [Wavelength.osl 📝](Wavelength.osl)
 
 ### Weave
 
-![](Weave.jpg)
-[Weave.osl](Weave.osl)
+![](Weave.jpg)  
 
-### WoodGrain
+- [Weave.osl 📝](Weave.osl)
 
-![](WoodGrain.jpg)
-[WoodGrain.osl](WoodGrain.osl)
+### Wood Grain
+
+![](WoodGrain.jpg)  
+
+- [WoodGrain.osl 📝](WoodGrain.osl)
