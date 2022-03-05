@@ -189,8 +189,6 @@ A collection of [Open Shading Language (OSL)](https://github.com/AcademySoftware
 
 - [Posterize.osl 📝](Posterize.osl)
 
-### README
-
 ### Radians To Degrees
 
 - [RadiansToDegrees.osl 📝](RadiansToDegrees.osl)
