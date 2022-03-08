@@ -144,7 +144,6 @@ shader VeinedMarble
 		]],
 		int Space = 1
 		[[
-			string widget = "null",
 			string page = "Co-ordinates",
 			string widget = "mapper",
 			string options = "World:0|Object:1|Fixed:2",
@@ -152,8 +151,7 @@ shader VeinedMarble
 		]],
 		vector Origin = 0
 		[[
-			string page = "Co-ordinates",
-			string widget = "null"
+			string page = "Co-ordinates"
 		]],
 
 		
