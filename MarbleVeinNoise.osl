@@ -1,0 +1,107 @@
+// Created by Saul Espinosa for Redshift 3D
+// Based on  * LGVeinedMarble.osl by Shane Ambler
+// Modified 01.11.2022
+
+shader MarbleVeinNoise 
+[[  string help = "Marble Vein Noise Generator",
+    string label = "Marble Vein Noise" ]]
+(
+
+// Input Paramaters
+
+        color diffuse_color = 0.0
+		[[
+			string label = "Base Color", 
+			string page = "Base"
+		]],
+
+		color VeinColor = 1.0
+		[[
+			string label = "Vein Color",
+			string page = "Marble Vein"
+		]],
+        float VeinFreq = 1.0
+		[[
+			string label = "Vein Frequency" ,
+			string page = "Marble Vein",
+			float min = 0, float max = 10
+		]],
+        float VeinLevels = 2.0
+		[[
+			string label = "Vein Levels" ,
+			string page = "Marble Vein",
+			float min = 0, float max = 25
+		]],
+        float WarpFreq = 1.0
+		[[
+			string label = "Warp Frequency" ,
+			string page = "Marble Vein",
+			float min = 0, float max = 25
+		]],
+        float Warping = 0.5
+		[[
+			string label = "Vein Warping" ,
+			string page = "Marble Vein",
+			float min = 0, float max = 25
+		]],
+        float Sharpness = 8.0
+		[[
+			string label = "Vein Sharpness" ,
+			string page = "Marble Vein",
+			float min = 0, float max = 25
+		]],
+		int Space = 0
+		[[
+			string page = "Co-ordinates",
+			string widget = "mapper",
+			string options = "World:0|Object:1|Fixed:2"
+		]],
+		vector Origin = 0
+		[[
+			string page = "Co-ordinates",
+		]],
+
+// Output Noise
+    output color outColor = 1
+
+)
+
+{
+// Define Noise
+#define snoise(x) (2*noise(x)-1)
+    color Ct;
+    point Nf;
+    point PP, offset;
+    float i, turb, freq, j;
+    float turbsum;
+
+	if (Space == 0)
+	    PP = P + Origin;
+	else if (Space == 1)
+		PP = transform("object", P) + Origin;
+	else
+		PP = Origin;
+
+    /* perturb the lookup */
+    freq = 1;
+    offset = 0;
+    for (i = 0;  i < 6;  i += 1) {
+        offset += 2 * Warping * ( noise (WarpFreq * freq * PP) - 0.5)  / freq;
+        freq *= 2;
+    }
+    PP += offset;
+
+    /* Now calculate the veining function for the lookup area */
+    turbsum = 0;  freq = 1;
+    PP *= VeinFreq;
+    for (i = 0;  i < VeinLevels;  i += 1) {
+        turb = abs (snoise (PP));
+        turb = pow (smoothstep (0.8, 1, 1 - turb), Sharpness) / freq;
+        turbsum += (1-turbsum) * turb;
+        freq *= 3;
+        PP *= 3;
+    }
+
+// Output
+    outColor = mix (diffuse_color, VeinColor, turbsum);
+}
