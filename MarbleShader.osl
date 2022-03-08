@@ -47,103 +47,104 @@ shader VeinedMarble
         color diffuse_color = color(0.946,0.788,0.829)
 		[[
 			string label = "Diffuse Color", 
-			string page = "0 : Diffuse"
+			string page = "Diffuse"
 		]],
 		float diffuse_weight = 0.8
 		[[
 			string label = "Diffuse Weight" ,
-			string page = "0 : Diffuse",
+			string page = "Diffuse",
 			float min = 0, float max = 1
 		]],
 		float diffuse_rough = 0.0
 		[[
 			string label = "Diffuse Roughness" ,
-			string page = "0 : Diffuse",
+			string page = "Diffuse",
 			float min = 0, float max = 1
 		]],
 		color SpecularColor = color(1.0)
 		[[
-			string page = "1 : Specular",
+			string page = "Specular",
 			string label = "Specular Color"
 		]],
         float SpecularWeight = 1.0
 		[[
 			string label = "Specular Weight" ,
-			string page = "1 : Specular",
+			string page = "Specular",
 			float min = 0, float max = 1
 		]],
         float Roughness = 0.4
 		[[
 			string label = "Roughness" ,
-			string page = "1 : Specular",
+			string page = "Specular",
 			float min = 0, float max = 1
 		]],
 		float IOR = 1.48
 		[[
 			string label = "IOR",
-			string page = "1 : Specular",
+			string page = "Specular",
 			float min = 0, float max = 25
 		]],
 		color coat_color = color(1.0)
 		[[
 			string label = "Coat Color",
-			string page = "2 : Coat",
+			string page = "Coat",
 		]],
 		float coat_weight = 1.0
 		[[
 			string label = "Coat Weight" ,
-			string page = "2 : Coat",
+			string page = "Coat",
 			float min = 0, float max = 1
 		]],
         float coat_roughness = 0.005
 		[[
 			string label = "Coat Roughness" ,
-			string page = "2 : Coat",
+			string page = "Coat",
 			float min = 0, float max = 1
 		]],
 		float coat_IOR = 1.52
 		[[
 			string label = "Coat IOR" ,
-			string page = "2 : Coat",
+			string page = "Coat",
 			float min = 0, float max = 25
 		]],
 		color VeinColor = color(0.663, 0.319, 0.371)
 		[[
 			string label = "Vein Color",
-			string page = "3 : Marble Vein"
+			string page = "Marble Vein"
 		]],
         float VeinFreq = 1.0
 		[[
 			string label = "Vein Frequency" ,
-			string page = "3 : Marble Vein",
+			string page = "Marble Vein",
 			float min = 0, float max = 10
 		]],
         float VeinLevels = 2.0
 		[[
 			string label = "Vein Levels" ,
-			string page = "3 : Marble Vein",
+			string page = "Marble Vein",
 			float min = 0, float max = 25
 		]],
         float WarpFreq = 1.0
 		[[
 			string label = "Warp Frequency" ,
-			string page = "3 : Marble Vein",
+			string page = "Marble Vein",
 			float min = 0, float max = 25
 		]],
         float Warping = 0.5
 		[[
 			string label = "Vein Warping" ,
-			string page = "3 : Marble Vein",
+			string page = "Marble Vein",
 			float min = 0, float max = 25
 		]],
         float Sharpness = 8.0
 		[[
 			string label = "Vein Sharpness" ,
-			string page = "3 : Marble Vein",
+			string page = "Marble Vein",
 			float min = 0, float max = 25
 		]],
 		int Space = 1
 		[[
+			string widget = "null",
 			string page = "Co-ordinates",
 			string widget = "mapper",
 			string options = "World:0|Object:1|Fixed:2",
@@ -152,6 +153,7 @@ shader VeinedMarble
 		vector Origin = 0
 		[[
 			string page = "Co-ordinates",
+			string widget = "null"
 		]],
 
 		
