@@ -143,6 +143,12 @@ A collection of [Open Shading Language (OSL)](https://github.com/AcademySoftware
 
 - [MarbleShader.osl 📝](MarbleShader.osl)
 
+### Marble Vein Noise
+
+![](MarbleVeinNoise.jpg)
+
+- [MarbleVeinNoise.osl 📝](MarbleVeinNoise.osl)
+
 ### Matcap
 
 ![](Matcap.jpg)

@@ -50,11 +50,12 @@ shader MarbleVeinNoise
 			string page = "Marble Vein",
 			float min = 0, float max = 25
 		]],
-		int Space = 0
+		int Space = 1
 		[[
 			string page = "Co-ordinates",
 			string widget = "mapper",
-			string options = "World:0|Object:1|Fixed:2"
+			string options = "World:0|Object:1|Fixed:2",
+			int connectable = 0
 		]],
 		vector Origin = 0
 		[[
