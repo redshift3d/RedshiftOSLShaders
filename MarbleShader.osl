@@ -30,8 +30,8 @@
  * last modified  29 Jun 1994 by Larry Gritz
  * 2012-12-19 converted to blender osl shader by Shane Ambler
  * 2020-4-27 converted to a Redshift Shader by Saul Espinosa, added coating Microfact GGX & Oren Nayer closure, 
- * new defaults, min/max values, label and page metadata.
- *
+ * new defaults, min/max values, label and page metadata. 
+ * 2022-03-08 Added World, Object space controls for the Noise
  */
 
 
@@ -45,99 +45,117 @@ shader VeinedMarble
 // Input Paramaters
 
         color diffuse_color = color(0.946,0.788,0.829)
-		[[string label = "Diffuse Color", 
-		string page = "0 : Diffuse"
+		[[
+			string label = "Diffuse Color", 
+			string page = "0 : Diffuse"
 		]],
 		float diffuse_weight = 0.8
-		[[string label = "Diffuse Weight" ,
-		string page = "0 : Diffuse",
-		float min = 0, float max = 1
+		[[
+			string label = "Diffuse Weight" ,
+			string page = "0 : Diffuse",
+			float min = 0, float max = 1
 		]],
 		float diffuse_rough = 0.0
-		[[string label = "Diffuse Roughness" ,
-		string page = "0 : Diffuse",
-		float min = 0, float max = 1
+		[[
+			string label = "Diffuse Roughness" ,
+			string page = "0 : Diffuse",
+			float min = 0, float max = 1
 		]],
 		color SpecularColor = color(1.0)
-		[[string page = "1 : Specular",
-		string label = "Specular Color"
+		[[
+			string page = "1 : Specular",
+			string label = "Specular Color"
 		]],
         float SpecularWeight = 1.0
-		[[string label = "Specular Weight" ,
-		string page = "1 : Specular",
-		float min = 0, float max = 1
+		[[
+			string label = "Specular Weight" ,
+			string page = "1 : Specular",
+			float min = 0, float max = 1
 		]],
         float Roughness = 0.4
-		[[string label = "Roughness" ,
-		string page = "1 : Specular",
-		float min = 0, float max = 1
+		[[
+			string label = "Roughness" ,
+			string page = "1 : Specular",
+			float min = 0, float max = 1
 		]],
 		float IOR = 1.48
-		[[string label = "IOR",
-		string page = "1 : Specular",
-		float min = 0, float max = 25
+		[[
+			string label = "IOR",
+			string page = "1 : Specular",
+			float min = 0, float max = 25
 		]],
 		color coat_color = color(1.0)
-		[[string label = "Coat Color",
-		string page = "2 : Coat",
+		[[
+			string label = "Coat Color",
+			string page = "2 : Coat",
 		]],
 		float coat_weight = 1.0
-		[[string label = "Coat Weight" ,
-		string page = "2 : Coat",
-		float min = 0, float max = 1
+		[[
+			string label = "Coat Weight" ,
+			string page = "2 : Coat",
+			float min = 0, float max = 1
 		]],
         float coat_roughness = 0.005
-		[[string label = "Coat Roughness" ,
-		string page = "2 : Coat",
-		float min = 0, float max = 1
+		[[
+			string label = "Coat Roughness" ,
+			string page = "2 : Coat",
+			float min = 0, float max = 1
 		]],
 		float coat_IOR = 1.52
-		[[string label = "Coat IOR" ,
-		string page = "2 : Coat",
-		float min = 0, float max = 25
+		[[
+			string label = "Coat IOR" ,
+			string page = "2 : Coat",
+			float min = 0, float max = 25
 		]],
 		color VeinColor = color(0.663, 0.319, 0.371)
-		[[string label = "Vein Color",
-		string page = "3 : Marble Vein"
+		[[
+			string label = "Vein Color",
+			string page = "3 : Marble Vein"
 		]],
         float VeinFreq = 1.0
-		[[string label = "Vein Frequency" ,
-		string page = "3 : Marble Vein",
-		float min = 0, float max = 10
+		[[
+			string label = "Vein Frequency" ,
+			string page = "3 : Marble Vein",
+			float min = 0, float max = 10
 		]],
         float VeinLevels = 2.0
-		[[string label = "Vein Levels" ,
-		string page = "3 : Marble Vein",
-		float min = 0, float max = 25
+		[[
+			string label = "Vein Levels" ,
+			string page = "3 : Marble Vein",
+			float min = 0, float max = 25
 		]],
         float WarpFreq = 1.0
-		[[string label = "Warp Frequency" ,
-		string page = "3 : Marble Vein",
-		float min = 0, float max = 25
+		[[
+			string label = "Warp Frequency" ,
+			string page = "3 : Marble Vein",
+			float min = 0, float max = 25
 		]],
         float Warping = 0.5
-		[[string label = "Vein Warping" ,
-		string page = "3 : Marble Vein",
-		float min = 0, float max = 25
+		[[
+			string label = "Vein Warping" ,
+			string page = "3 : Marble Vein",
+			float min = 0, float max = 25
 		]],
         float Sharpness = 8.0
-		[[string label = "Vein Sharpness" ,
-		string page = "3 : Marble Vein",
-		float min = 0, float max = 25
+		[[
+			string label = "Vein Sharpness" ,
+			string page = "3 : Marble Vein",
+			float min = 0, float max = 25
 		]],
-		int   aces = 0
-		[[string page = "Extra",
-		string widget = "checkBox",
-		int connectable = 0,
-		string label = "ACES"
+		int Space = 0
+		[[
+			string page = "Co-ordinates",
+			string widget = "mapper",
+			string options = "Object:0|World:1|Fixed:2"
 		]],
-		vector Vector = P
-		[[string page = "Extra"
+		vector Origin = 0
+		[[
+			string page = "Co-ordinates",
 		]],
 
 		
 // Output Closure		
-        output closure color BSDF = diffuse(N) )
+        output closure color outColor = diffuse(N) )
 		
 {
 #define snoise(x) (2*noise(x)-1)
@@ -147,7 +165,12 @@ shader VeinedMarble
     float i, turb, freq, j;
     float turbsum;
 
-    PP = transform ("shader", Vector);
+	if (Space == 0)
+	    PP = P + Origin;
+	else if (Space == 1)
+		PP = transform("object", P) + Origin;
+	else
+		PP = Origin;
 
     /* perturb the lookup */
     freq = 1;
@@ -168,26 +191,10 @@ shader VeinedMarble
         freq *= 3;
         PP *= 3;
     }
-	
-	// ACES sRGB Transform
-	matrix aces_tm = matrix(
-		0.6131, 0.0701, 0.0206, 0,
-		0.3395, 0.9164, 0.1096, 0,
-		0.0474, 0.0135, 0.8698, 0,
-		0, 0, 0, 1);
 
     color Out = mix (diffuse_color, VeinColor, turbsum);
-	float r = Out[0], g = Out[1], b = Out[2];
-
-// ACES Output
-	if (aces == 0)
-	Ct = Out;
-	else
-	{
-	Ct = transform(aces_tm, vector(r,g,b));
-	}	
 
     Nf = normalize(N);
-    BSDF = Ct * diffuse_weight * oren_nayar(Nf, diffuse_rough);
-    BSDF += (SpecularColor * SpecularWeight * microfacet("ggx",Nf,Roughness,IOR,0)) + (coat_color * coat_weight * microfacet("ggx",Nf,coat_roughness,coat_IOR,0));
+    outColor = Out * diffuse_weight * oren_nayar(Nf, diffuse_rough);
+    outColor += (SpecularColor * SpecularWeight * microfacet("ggx",Nf,Roughness,IOR,0)) + (coat_color * coat_weight * microfacet("ggx",Nf,coat_roughness,coat_IOR,0));
 }
