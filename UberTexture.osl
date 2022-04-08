@@ -1,0 +1,188 @@
+// Author: Adrian Cruceru
+// simple texture node with extra controls
+// © Adrian Cruceru 2021
+
+shader oslTexture
+[[  string label = "Uber Texture" ]]
+(
+    string fileName = ""
+    [[  string widget="filename",
+		string page = "Image" ]],
+
+    // Color Spaces
+    // might not be needed as the filename widget has this internally
+    int changeSpace = 0
+    [[	string label = "Replace Color Space",
+    	string page = "Color Space Conversion",
+    	string widget = "checkBox"]],
+   string fromSpace = "" 
+    [[  string label = "Input Space", string page = "Color Space Conversion", string widget = "colorspace"]],
+    string toSpace = "" 
+    [[  string label = "Output Space", string page = "Color Space Conversion", string widget = "colorspace"]],
+    int swapInputs = 0
+    [[  string label = "Swap Spaces", string page = "Color Space Conversion", string widget = "checkBox"]],
+    
+    // UVs
+    string  uTiling = "default"
+    [[  string widget = "popup",
+		string label = "U Tiling",
+	    string page = "Scale",
+        string options = "default|periodic|clamp|mirror|black" ]],
+    string  vTiling = "default"
+    [[  string widget = "popup",
+		string label = "V Tiling",
+	    string page = "Scale",
+        string options = "default|periodic|clamp|mirror|black" ]],
+	// Transforms
+	float scale = 1
+	[[  string label = "Scale",
+	    string page = "Scale",
+		float softmin = 0,
+		float softmax = 10,
+		float slidermin = 0,
+		float slidermax = 10,
+		float sensitivity = 0.001 ]],
+	float uRepeats = 1
+	[[  string label = "U Repeats",
+	    string page = "Scale",
+		float softmin = 0,
+		float softmax = 10,
+		float slidermin = 0,
+		float slidermax = 10,
+		float sensitivity = 0.001 ]],
+	float vRepeats = 1
+	[[ 	string label = "V Repeats",
+	    string page = "Scale",
+		float softmin = 0,
+		float softmax = 10,
+		float slidermin = 0,
+		float slidermax = 10,
+		float sensitivity = 0.001 ]],
+	float uOffset = 0
+	[[  string label = "U Offset",
+	    string page = "Offset",
+		float slidermin = -1,
+		float slidermax = 1,
+		float softmin = -1,
+		float softmax = 1,
+		float sensitivity = 0.001 ]],
+	float vOffset = 0
+	[[  string label = "V Offset",
+	    string page = "Offset",
+		float slidermin = -1,
+		float slidermax = 1,
+		float softmin = -1,
+		float softmax = 1,
+		float sensitivity = 0.001 ]],
+	float angle = 0
+	[[  string label = "Angle",
+	    string page = "Rotate",
+		float slidermin = -360,
+		float slidermax = 360,
+		float softmin = -360,
+		float softmax = 360,
+		float sensitivity = 0.001 ]],
+	float uCenter = 0.5
+	[[  string label = "Center U",
+	    string page = "Rotate",
+		float slidermin = -1,
+		float slidermax = 1,
+		float softmin = -1,
+		float softmax = 1,
+		float sensitivity = 0.001 ]],
+	float vCenter = 0.5
+	[[  string label = "Center V",
+	    string page = "Rotate",
+		float slidermin = -1,
+		float slidermax = 1,
+		float softmin = -1,
+		float softmax = 1,
+		float sensitivity = 0.001 ]],
+    
+    color colorGain = 1
+    [[	string label = "Gain",
+    	string page = "Adjust"]],
+	float gainMul = 1
+	[[  string label = "Gain Intensity",
+	    string page = "Adjust",
+		float softmin = 0,
+		float softmax = 10,
+		float slidermin = 0,
+		float slidermax = 10,
+		float sensitivity = 0.001 ]],
+    color colorOffset = 0
+    [[	string label = "Offset",
+    	string page = "Adjust"]],
+	float offsetMul = 1
+	[[  string label = "Offset Intensity",
+	    string page = "Adjust",
+		float softmin = -10,
+		float softmax = 10,	
+		float slidermin = -10,
+		float slidermax = 10,
+		float sensitivity = 0.001 ]],
+	// exposure
+	float exposure = 0
+	[[  string label = "Exposure",
+	    string page = "Adjust",
+		float softmin = -10,
+		float softmax = 10,
+		float slidermin = -10,
+		float slidermax = 10,
+		float sensitivity = 0.001 ]],
+	// negative
+    int invert = 0
+    [[	string label = "Color Invert",
+    	string page = "Adjust",
+    	string widget = "checkBox"]],
+
+    // outputs
+    output color outColor=0
+    [[  string label = "Out Color"]],
+    output string tex0 = ""
+    [[	string label = "Tex 0"]]
+)
+{
+    // uv coord
+    point p = point("object", u, v, 0);
+
+    // rotate about a center pivot
+    point r = transform("object", rotate( p, radians(angle),
+                        point(uCenter, vCenter, 0), point(uCenter, vCenter, 1)));
+    float rotU = r[0];
+    float rotV = r[1];
+
+    // offset
+	float uTranslate = (rotU - uOffset);
+    float vTranslate = (rotV - vOffset);
+
+	// repeats and scale
+	float uCoord = clamp(mod(uTranslate * uRepeats / scale, 1), 0, 1);
+	float vCoord = clamp(mod(vTranslate * vRepeats / scale, 1), 0, 1);
+
+    // texture
+    color outTexture = texture( fileName, uCoord, -vCoord, "swrap", uTiling, "twrap", vTiling);
+    // color space conversion
+
+    // invert
+    if (invert == 1)
+    outTexture = 1 - outTexture;
+
+    // gain and offset controls
+    outTexture = (outTexture * colorGain *gainMul) + (colorOffset*offsetMul);
+
+    // exposure
+    outTexture *= pow(2,exposure);
+
+    // color space change
+	if (changeSpace == 1) {
+	    color out = transformc(fromSpace, toSpace, outTexture);
+	    color inverted = transformc(toSpace, fromSpace, outTexture);
+	    outColor = mix(out, inverted, swapInputs);
+	}
+	else
+	outColor = outTexture;
+
+	// string output
+	tex0 = fileName;
+}
