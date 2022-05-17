@@ -1,0 +1,34 @@
+/* 
+Reflectance to IOR by Saul Espinosa for Redshift 3D
+OSL node to allow for the older rsMaterial Reflectivity style Input 
+for the RS Standard Surface. Outputs a Specular Reflection Color and IOR output.
+
+Last Modified : 5/16/2022
+
+*/
+shader ReflectanceToIOR
+[[ string help     = "Convert Reflectivity Value to Reflection Color and IOR",
+   string label    = "Reflectance To IOR"
+]]
+(
+	color Reflectivity = 0.04 
+		[[	string page = "Input", 
+			float min = 0, 
+			float max = 1
+		]],
+	
+	output color ReflectionColor = 0.0,
+	output float IOR = 0.0,
+)
+{
+
+// Reflection Color = RGB to Hue Saturation and 1.0 Value
+	color convert = transformc ("hsv", Reflectivity );
+	float r = convert[0], g = convert[1], b = convert[2];
+	color conversion = transformc ("hsv", "rgb", vector(r,g,1.0));
+	ReflectionColor = conversion;
+
+// IOR=(SQRT(Reflectance Value)+1)/(1-SQRT(Reflectance Value))
+
+	IOR = (sqrt(b)+1) / (1-sqrt(b));
+}
