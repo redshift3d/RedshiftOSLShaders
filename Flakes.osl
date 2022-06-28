@@ -3,7 +3,7 @@
 // Modified: 2021-02-31
 // License MIT Copyright Mads Drøschler
 // https://github.com/gkmotu/OSL-Shaders
-// Modified: 2021-03-01 by Saul Espinosa for Redshift 3D. Added Metadata + Mapper Menu for Coordinate Space
+// Modified: 2022-06-28 by Saul Espinosa for Redshift 3D. Added Page Metadata + Mapper Menu for Coordinate Space
 
 vector TileHash ( output vector x, int tileSize ) {
 
@@ -41,94 +41,84 @@ float IDs ( output float x, int seed )
 }	
 
 shader Flakes
-	[[
-		string help = 	"Use the Flakes shader to create small glints in surfaces",
-		string label = "Flakes"
-	]]	
-(	
+[[  string help = "Creates Paint Flake Noise Pattern",
+    string label = "Flakes" ]]
+(
+
 	// Inputs
 	float scale = 0.2
 	[[
-		int connectable = 0,
+        string label = "Scale",
+        string page = "Flakes",
 		float min = 0.0,
 		float max = 25.0,
-		string help = 	"<ul><br><li>Scale the IDs up and down. ( This is disabled when Seamless Tiling is enabled )<br></li>"
-						"<li>Use the Tile Size instead when Seamless Tiling is enabled.</li></ul>"
 	]],
 	
-	float Density = 1.0
+	float density = 1.0
 	[[
-		int connectable = 0,
+		string page = "Flakes",
+        string label = "Density",
 		float min = 0.0,
 		float max = 1.0,
-		string help =	"<ul><br><li>0.0 will print 0% IDs<br></li>"
-						"<li>0.5 will print 50% of the IDs<br></li>"
-						"<li>1.0 will cover the whole surface with ID's</li></ul>"
 	]],
 	
-	float Randomize = 0.5
+	float randomize = 0.5
 	[[
-		int connectable = 0,
+        string page = "Flakes",		
+        string label = "Randomize",
 		float min = 0.0,
 		float max = 1.0,
-		string help =	"<ul><br><br>A value between 0-1 that will rotate the IDs<br>"
-						"<li>If value is 0, the IDs will point straight up from the surface ( no glints )<br></li>"
-						"<li>If value is 0.5, the IDs will be rotated randomly around 180 deg. ( mild dispersion )<br></li>"
-						"<li>If value is 1, the IDs will be rotated randomly around 360 deg.( Very scattered dispersion )</li></ul>"
 	]],
 	
 	int seed = 42
 	[[
-		int connectable = 0,
+        string page = "Flakes",
+        string label = "Seed",
 		int min = 0,
 		int max = 100,
-		string help = 	"<br><br>Reshuffle the layout of the IDs"
+	]],
+
+		int c_space = 0
+	[[
+        string page = "Flakes",
+		string label =		"Coordinate Space",
+		string widget =		"mapper", 
+		string options = 	"object:0|world:1|UV:2",
 	]],
 	
+
+	// 2D Baking Tiles
 	int Tiling = 0
 	[[
+        string page = "Tiles",
 		string widget = "checkBox",
 		string label = "Seamless Tiling",
+		string widget = "null",
 		int connectable = 0,
-		string help =	"<ul><br><br><li>Plug the Flake Shader directly into the Physical Materials diffuse slot</li>"
-						"<br><li>Make a square plane, 100x100/250x250/etc.</li>"
-						"<br><li>Assign the material to the plane.</li>"
-						"<br><li>Enable Seamless Tiling.</li>"
-						"<br><li>Adjust the size of the texure details with the Tile Size parameter.</li>"
-						"<br><li>Bake an Arnold Albedo texture to .exr and convert it to .tx with mipmapping enabled, for optimal performance.</li><br>"
-						"<br>You now have a Seamless Tiling OSL Flake bitmap.</ul>"
 	]],
 	
 	int tileSize = 10
 	[[
+        string page = "Tiles",
+        string label = "Tile Size",
 		int min = 10,
 		int max = 50,
 		int connectable = 0, 
-		string help = 		"<br><br>Increase value to sample more IDs on the seamless tile"
 	]],
 	
-	int CSpace = 0
-	[[
-		string label =		"Coord Space",
-		string widget =		"mapper", 
-		string options = 	"object:0|world:1|UV:3",
-		string help =		"<ul><br><li>Object</li><br>"
-							"<li>World</li><br>"
-							"<li>UV (Texture)</li></ul>"
-	]],
 	
 	// Output
-	output normal Out = 0.0,
-	output float A = 0,
+	output normal outColor = 0.0,
+	output float outAlpha = 0,
 )
 {
 	// Coord Space
 	string mode;
-	point pos,s = P;
+	point pos, s = P;
 	vector t = vector(u,v,0); 
 		
-	CSpace == 0 ? mode = "object" : mode = "world";
-	CSpace == 2 ? pos = transform("object",t) : pos = transform(mode,s);
+	c_space == 0 ? mode = "object" : mode = "world";
+	c_space == 2 ? pos = transform("object",t) : pos = transform(mode,s);
 	Tiling ? pos = transform("object",t):0;
 
 	// Scale	
@@ -151,27 +141,28 @@ shader Flakes
 	float z = 0.5 + 0.5 * tan( k[1]*M_2PI );
     
     // Normalize
-    Out = normalize(vector(x,y,z)*2-1)*0.5+0.5;  
+    outColor = normalize(vector(x,y,z)*2-1)*0.5+0.5;  
     
     // Fetch xyz IDs        
-    Out[0] = IDs(Out[0],4);
-    Out[1] = IDs(Out[1],4);
-    Out[2] = IDs(Out[2],1);
+    outColor[0] = IDs(outColor[0],4);
+    outColor[1] = IDs(outColor[1],4);
+    outColor[2] = IDs(outColor[2],1);
     // Fit z to 0.5 - 1.0
-    Out[2] = 0.5 + 0.5 *Out[2];
+    outColor[2] = 0.5 + 0.5 *outColor[2];
     
 	// Density
-	float h = -1000 + Out[0]*2000;
+	float h = -1000 + outColor[0]*2000;
 	h = int(trunc(h));
 	float Rehash = noise("cell", vector(abs(h), abs(16), 11)); 
 	Rehash = mix(0, 1, Rehash);
-	Density > Rehash ? Out = Out : Out = Base_Normal;	
+	density > Rehash ? outColor = outColor : outColor = Base_Normal;	
 	
-	// A
-	Out[0] > 0.5 or Out[0] < 0.5 ? A = 1 : A = 0;
+	// outAlpha
+	outColor[0] > 0.5 or outColor[0] < 0.5 ? outAlpha = 1 : outAlpha = 0;
 		
 	// Randomize
-	Out = mix(Base_Normal,Out,Randomize);
-	
-	//Out = Out*2-1;	
+	outColor = mix(Base_Normal,outColor,randomize);
+	//outColor = vector(1, 1, 0);
+
+	//outColor = outColor*2-1;	
 }
