@@ -1,78 +1,72 @@
 // Index based Randomizer
 // Original idea by Zap Andersson, modified by Saul Espinosa for Redshift 3d
 // This file is licensed under Apache 2.0 license
-
+// Modified 2023/2/3 - Added UI changes & More Color Jitter Options
 
 shader rsJitter
 [[  string help = "Randomizes Color, Float, Vector inputs using UserData",
     string label = "Jitter" ]]
 (
-        int   UserData   = 0,
-		
-/// Color Values
-        color ColorMin   = 0.0
-        		[[
-        		string page = "Color Jitter"
-        		]],
-        color ColorMax   = 1.0
-                	[[
-                	string page = "Color Jitter"
-        		]],
-        int   ColorSeed  = 1
-			[[
-			int min = 0,
-			int max = 100,
-			string page = "Color Jitter"
-			]],
-/// Float Values
-        float FloatMin   = 0.0
-			[[
-			float min = 0,
-			float max = 1,
-			string page = "Float Jitter"
-			]],
-        float FloatMax   = 1.0
-			[[
-			float min = 0,
-			float max = 1,
-			string page = "Float Jitter"
-			]],
-        int   FloatSeed  = 1
-			[[
-			int min = 0,
-			int max = 100,
-			string page = "Float Jitter"
-			]],
-/// Vector Values
-        vector VectorMin   = 0.0
-			[[
-			vector min = 0,
-			vector max = 100,
-			string page = "Vector Jitter"
-			]],
-        vector VectorMax   = 1.0
-        		[[
-			vector min = 0,
-			vector max = 100,
-			string page = "Vector Jitter"
-			]],
-        int   VectorSeed  = 1
-			[[
-			int min = 0,
-			int max = 100,
-			string page = "Vector Jitter"
-			]],
-/// Define Outputs			
+        int   UserData   = 0 [[string page = "Input"]],
+        color ColorInput = 0 [[string page = "Input"]],
+
+	/// Color Values                 
+        float HueMin   = 0.0 [[string label = "Hue Min", float min = -1, float max = 1, string page = "Color Jitter"]],
+        float HueMax   = 0.0 [[string label = "Hue Max", float min = -1, float max = 1, string page = "Color Jitter"]],  
+        float SatMin    = 0.0 [[string label = "Saturation Min", float min = -1, float max = 1, string page = "Color Jitter"]],
+        float SatMax    = 0.0 [[string label = "Saturation Max", float min = -1, float max = 1, string page = "Color Jitter"]],
+        float ValMin   = 0.0 [[string label = "Value Min", float min = -1, float max = 1, string page = "Color Jitter"]],
+        float ValMax   = 0.0 [[string label = "Value Max", float min = -1, float max = 1, string page = "Color Jitter"]],        
+        float TempMin   = 0.0 [[string label = "Temperature Min", float min = -.5, float max = .5, string page = "Color Jitter"]],
+        float TempMax   = 0.0 [[string label = "Temperature Max", float min = -.5, float max = .5, string page = "Color Jitter"]],         
+        float TintMin   = 0.0 [[string label = "Tint Min", float min = -.5, float max = .5, string page = "Color Jitter"]],
+        float TintMax   = 0.0 [[string label = "Tint Max", float min = -.5, float max = .5, string page = "Color Jitter"]], 
+        int   ColorSeed  = 1.0 [[ int min = 0, int max = 100, string page = "Color Jitter"]],
+	
+	/// Float Values
+        float FloatMin   = 0.0 [[string label = "Float Min", float min = 0, float max = 1, string page = "Float Jitter"]],
+        float FloatMax   = 1.0 [[string label = "Float Max", float min = 0, float max = 1, string page = "Float Jitter"]],
+        int   FloatSeed  = 1.0 [[string label = "Float Seed", int min = 0, int max = 100, string page = "Float Jitter"]],
+	
+	/// Vector Values
+        vector VectorMin   = 0.0 [[string label = "Vector Min", vector min = 0, vector max = 100, string page = "Vector Jitter"]],
+        vector VectorMax   = 1.0 [[string label = "Vector Max", vector min = 0, vector max = 100, string page = "Vector Jitter"]],
+        int   VectorSeed  = 1.0 [[string label = "Vector Seed", int min = 0, int max = 100, string page = "Vector Jitter"]],
+	/// Define Outputs			
         output color ColorOut = 0.0,
         output float FloatOut = 0.0,
         output vector VectorOut = 0.0,
 )
 {
+
         // Output Values
         float ratio1 = noise("cell", vector(abs(UserData), abs(ColorSeed), 10));
-        float ratio2 = noise("cell", vector(abs(UserData), abs(FloatSeed), 10));
-        float ratio3 = noise("cell", vector(abs(UserData), abs(VectorSeed), 10));    
-        ColorOut = mix(ColorMin, ColorMax, ratio1);
-        FloatOut = mix(FloatMin, FloatMax, ratio2);
-        VectorOut = mix(VectorMin, VectorMax, ratio3);
+        float ratio2 = noise("cell", vector(abs(UserData), abs(ColorSeed), 11));
+        float ratio3 = noise("cell", vector(abs(UserData), abs(ColorSeed), 12));
+        float ratio4 = noise("cell", vector(abs(UserData), abs(ColorSeed), 13));
+        float ratio5 = noise("cell", vector(abs(UserData), abs(ColorSeed), 14));
+        float ratio6 = noise("cell", vector(abs(UserData), abs(FloatSeed), 10));
+        float ratio7 = noise("cell", vector(abs(UserData), abs(VectorSeed), 10));  
+        float HueShift = mix(HueMin, HueMax, ratio1);
+        float SatShift = mix(SatMin, SatMax, ratio2);
+        float ValShift = mix(ValMin, ValMax, ratio3);  
+        float TempShift = mix(TempMin, TempMax, ratio4);
+        float TintShift = mix(TintMin, TintMax, ratio5);
+         
+
+        color Out = transformc("rgb", "hsv", ColorInput);      
+        Out[0] += HueShift;
+        Out[1] += SatShift;    
+        Out[2] += ValShift;
+        Out = transformc("hsv", "rgb", Out);  
+        
+        // Temp & Tint Shifts
+        Out[0] += TempShift;
+        Out[1] += TintShift;
+        Out[2] -= TempShift;
+        ColorOut = Out;
+
+        // Output Float & Vector
+        FloatOut = mix(FloatMin, FloatMax, ratio6);
+        VectorOut = mix(VectorMin, VectorMax, ratio7);
 }
