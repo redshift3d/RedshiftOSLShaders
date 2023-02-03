@@ -21,17 +21,17 @@ shader rsJitter
         float TempMax   = 0.0 [[string label = "Temperature Max", float min = -.5, float max = .5, string page = "Color Jitter"]],         
         float TintMin   = 0.0 [[string label = "Tint Min", float min = -.5, float max = .5, string page = "Color Jitter"]],
         float TintMax   = 0.0 [[string label = "Tint Max", float min = -.5, float max = .5, string page = "Color Jitter"]], 
-        int   ColorSeed  = 1.0 [[ int min = 0, int max = 100, string page = "Color Jitter"]],
+        int   ColorSeed  = 1 [[ int min = 0, int max = 100, string page = "Color Jitter"]],
 	
 	/// Float Values
         float FloatMin   = 0.0 [[string label = "Float Min", float min = 0, float max = 1, string page = "Float Jitter"]],
         float FloatMax   = 1.0 [[string label = "Float Max", float min = 0, float max = 1, string page = "Float Jitter"]],
-        int   FloatSeed  = 1.0 [[string label = "Float Seed", int min = 0, int max = 100, string page = "Float Jitter"]],
+        int   FloatSeed  = 1 [[string label = "Float Seed", int min = 0, int max = 100, string page = "Float Jitter"]],
 	
 	/// Vector Values
         vector VectorMin   = 0.0 [[string label = "Vector Min", vector min = 0, vector max = 100, string page = "Vector Jitter"]],
         vector VectorMax   = 1.0 [[string label = "Vector Max", vector min = 0, vector max = 100, string page = "Vector Jitter"]],
-        int   VectorSeed  = 1.0 [[string label = "Vector Seed", int min = 0, int max = 100, string page = "Vector Jitter"]],
+        int   VectorSeed  = 1 [[string label = "Vector Seed", int min = 0, int max = 100, string page = "Vector Jitter"]],
 	/// Define Outputs			
         output color ColorOut = 0.0,
         output float FloatOut = 0.0,
