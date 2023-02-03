@@ -7,61 +7,71 @@ shader rsJitter
 [[  string help = "Randomizes Color, Float, Vector inputs using UserData",
     string label = "Jitter" ]]
 (
-        int   Idx   = 0,
+        int   UserData   = 0,
 		
-		/// Color Values
+/// Color Values
+        color ColorMin   = 0.0
+        		[[
+        		string page = "Color Jitter"
+        		]],
+        color ColorMax   = 1.0
+                	[[
+                	string page = "Color Jitter"
+        		]],
         int   ColorSeed  = 1
 			[[
 			int min = 0,
-			int max = 100
+			int max = 100,
+			string page = "Color Jitter"
 			]],
-        color ColorMin   = 0.0,
-        color ColorMax   = 1.0,
-        
-		/// Float Values
-        int   FloatSeed  = 1
-			[[
-			int min = 0,
-			int max = 100
-			]],
+/// Float Values
         float FloatMin   = 0.0
 			[[
 			float min = 0,
-			float max = 1
+			float max = 1,
+			string page = "Float Jitter"
 			]],
         float FloatMax   = 1.0
 			[[
 			float min = 0,
-			float max = 1
+			float max = 1,
+			string page = "Float Jitter"
 			]],
-			
-        /// Vector Values
-        int   VectorSeed  = 1
+        int   FloatSeed  = 1
 			[[
 			int min = 0,
-			int max = 100
+			int max = 100,
+			string page = "Float Jitter"
 			]],
+/// Vector Values
         vector VectorMin   = 0.0
 			[[
 			vector min = 0,
-			vector max = 100
+			vector max = 100,
+			string page = "Vector Jitter"
 			]],
         vector VectorMax   = 1.0
-        	[[
+        		[[
 			vector min = 0,
-			vector max = 100
+			vector max = 100,
+			string page = "Vector Jitter"
 			]],
-
-		/// Define Outputs			
+        int   VectorSeed  = 1
+			[[
+			int min = 0,
+			int max = 100,
+			string page = "Vector Jitter"
+			]],
+/// Define Outputs			
         output color ColorOut = 0.0,
         output float FloatOut = 0.0,
         output vector VectorOut = 0.0,
 )
 {
         // Output Values
-        float ratio1 = noise("cell", vector(abs(Idx), abs(ColorSeed), 10));
-        float ratio2 = noise("cell", vector(abs(Idx), abs(FloatSeed), 10));
-        float ratio3 = noise("cell", vector(abs(Idx), abs(VectorSeed), 10));    
+        float ratio1 = noise("cell", vector(abs(UserData), abs(ColorSeed), 10));
+        float ratio2 = noise("cell", vector(abs(UserData), abs(FloatSeed), 10));
+        float ratio3 = noise("cell", vector(abs(UserData), abs(VectorSeed), 10));    
         ColorOut = mix(ColorMin, ColorMax, ratio1);
         FloatOut = mix(FloatMin, FloatMax, ratio2);
         VectorOut = mix(VectorMin, VectorMax, ratio3);
