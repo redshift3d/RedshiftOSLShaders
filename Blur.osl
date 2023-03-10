@@ -1,0 +1,49 @@
+// Blur Shader - the output of this OSL shader can be attached to a Redshift Texture's Offset port to create a gaussian blur
+// Written by Darby Edelen based on work by Patrick Letourneau
+/*
+   Copyright 2023 Edward Darby Edelen
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+*/
+
+vector gaussianFromUniform(vector V){
+    float u2_sin;
+    float u2_cos;
+
+    sincos(M_2PI * V.y, u2_sin, u2_cos);
+    float r = sqrt(-2 * log(V.x));
+    return vector(r * u2_cos, r * u2_sin, 0);
+}
+
+shader Blur(
+    float radius = 5 [[string label="Radius", string page="Blur", int slider=1, float min = 0, float max = 200, float slidermax=50, float sensitivity = 0.1]],
+    int dir_mode = 0 [[string label="Direction Mode", string page="Blur",
+                    string widget="mapper", string options="Anisotropy:0|Vector:1", int connectable=0]],
+    float aniso = 0 [[string label="Anisotropy", string page="Anisotropy", int slider=1,float min=-1,float max=1]],
+    float rotation = 0 [[string label="Rotation", string page="Anisotropy", int slider=1, float min=-180, float max=180]],
+    vector direction = 1 [[string label="Direction Vector", string page="Vector Blur"]],
+    float center = 0 [[string label="Center", string page="Vector Blur", int slider=1,float min=-1,float max=1]],
+    output vector texture_offset=0
+)
+{
+    vector a = vector(1 + aniso, 1 - aniso, 0);
+    vector off = gaussianFromUniform(noise("hash", P));
+    vector blur_direct = direction * vector(1,1,0);
+    float blur_length = length(blur_direct);
+    blur_direct /= blur_length;
+
+    float blur_rotate = select(radians(rotation), atan2(blur_direct.y, blur_direct.x), dir_mode);
+    vector mag = select(off * a, (off + center) * vector(blur_length,0,0), dir_mode);
+
+    texture_offset = mix(vector(0), rotate(mag, blur_rotate, vector(0,0,1)), radius * 0.01);
+}
