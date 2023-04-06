@@ -1,0 +1,33 @@
+//
+// NormalRotation.osl
+//
+// A crappy shader for rotating tangent-space normals.
+// Includes a pass-through Texture slot for convenience.
+//
+// by Geoff Bolton for Redshift
+// 2022-03-07
+//
+shader NormalRotation(
+	vector tex = 0 [[ string label="Texture" ]],
+	vector dir = 0 [[ string label="Normal" ]],
+	float angle = 0 [[ string label="Angle" ]],
+	int units = 0 [[ string label="Angle Units", string widget="mapper", string options="degrees:0|radians:1", int connectable = 0 ]],
+	int flipU = 0 [[ string label="Flip U", string widget="checkBox", int connectable = 0 ]],
+	int flipV = 0 [[ string label="Flip V", string widget="checkBox", int connectable = 0 ]],
+	int flipW = 0 [[ string label="Flip W", string widget="checkBox", int connectable = 0 ]],
+	int flipZ = 1 [[ string label="Flip Z", string widget="checkBox", int connectable = 0 ]],
+	output vector outTexture = 0 [[ string label="Texture" ]],
+	output vector outNormal = 0 [[ string label="Normal" ]]
+)
+{
+	vector nrml = vector(
+		flipU ? -dir[0] : dir[0],
+		flipV ? -dir[1] : dir[1],
+		flipW ? -dir[2] : dir[2]
+	);
+	vector center = vector(0.5, 0.5, 0.0);
+	vector axis = vector(0.5, 0.5, flipZ ? -1.0 : 1.0);
+	float theta = units == 0 ? radians(angle) : angle;
+	outNormal = rotate(nrml, theta, center, axis);
+	outTexture = tex;
+}
