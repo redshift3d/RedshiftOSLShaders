@@ -1,5 +1,8 @@
 // Blur Shader - the output of this OSL shader can be attached to a Redshift Texture's Offset port to create a gaussian blur
 // Written by Darby Edelen based on work by Patrick Letourneau
+// Updated 3/15/23 - Added vector direction mode; added coordinate space selection for blur strength and vector direction.
+// Updated 3/16/23 - Modified coordinate scale. Changed range on strength slider. Modified limits on sliders.
+// Updated 3/19/23 - Renamed output to UV Offset and added XYZ Offset for use with Noise or other shaders expecting 3D coordinates.
 /*
    Copyright 2023 Edward Darby Edelen
 
@@ -16,34 +19,62 @@
    limitations under the License.
 */
 
-vector gaussianFromUniform(vector V){
+vector gaussianFromUniform(vector vec_in){
     float u2_sin;
     float u2_cos;
 
-    sincos(M_2PI * V.y, u2_sin, u2_cos);
-    float r = sqrt(-2 * log(V.x));
+    sincos(M_2PI * vec_in.y, u2_sin, u2_cos);
+    float r = sqrt(-2 * log(vec_in.x));
     return vector(r * u2_cos, r * u2_sin, 0);
 }
 
 shader Blur(
-    float radius = 5 [[string label="Radius", string page="Blur", int slider=1, float min = 0, float max = 200, float slidermax=50, float sensitivity = 0.1]],
+    float strength = 10 [[string label="Strength", string page="Blur", string widget="number", int slider=1, float slidermin = 0, float slidermax=100, float min=0, float max=1000000000, float sensitivity = 0.1]],
+    int space_select = 0 [[string label="Space", string page="Blur", string widget="mapper", string options="UV:0|Object:1|World:2"]],
     int dir_mode = 0 [[string label="Direction Mode", string page="Blur",
-                    string widget="mapper", string options="Anisotropy:0|Vector:1", int connectable=0]],
-    float aniso = 0 [[string label="Anisotropy", string page="Anisotropy", int slider=1,float min=-1,float max=1]],
-    float rotation = 0 [[string label="Rotation", string page="Anisotropy", int slider=1, float min=-180, float max=180]],
-    vector direction = 1 [[string label="Direction Vector", string page="Vector Blur"]],
-    float center = 0 [[string label="Center", string page="Vector Blur", int slider=1,float min=-1,float max=1]],
-    output vector texture_offset=0
+                    string widget="mapper", string options="Anisotropy:0|Vector Blur:1", int connectable=0]],
+    float aniso = 0 [[string label="Anisotropy", string page="Anisotropy", string widget = "number", int slider=1,float min=-1,float max=1]],
+    float rotation = 0 [[string label="Rotation", string page="Anisotropy", string widget = "number", int slider=1, float slidermin=-180, float slidermax=180]],
+    int direction_space = 0 [[string label="Space", string page="Vector Blur",
+                            string widget="mapper", string options="UV:0|World:1"]],
+    vector direction = vector(0,1,0) [[string label="Direction Vector", string widget = "number", string page="Vector Blur"]],
+    float center = 0 [[string label="Center", string page="Vector Blur", string widget = "number", int slider=1, float slidermin = -1, float slidermax = 1]],
+    vector tangent_in = 0 [[string label="Tangent Input", string widget = "number", string page="Vector Blur"]],
+    output vector UV_offset = 0,
+    output vector object_offset = 0,
+    output vector world_offset = 0
 )
 {
+    vector tangent = select(normalize(dPdu), tangent_in, isconnected(tangent_in));
+    vector bitangent = cross(tangent, N);
+    matrix TBN = matrix(tangent.x, tangent.y, tangent.z, 0,
+                    bitangent.x, bitangent.y, bitangent.z, 0,
+                    Ng.x, Ng.y, Ng.z, 0,
+                    0, 0, 0, 0);
+    matrix obj_to_world = matrix("object", "world");
     vector a = vector(1 + aniso, 1 - aniso, 0);
-    vector off = gaussianFromUniform(noise("hash", P));
-    vector blur_direct = direction * vector(1,1,0);
-    float blur_length = length(blur_direct);
-    blur_direct /= blur_length;
+    vector zrnd = gaussianFromUniform(noise("hash", vector(1) - P));
+    vector off = gaussianFromUniform(noise("hash", P)) + vector(0,0,zrnd.x);
+    vector uv_blur_direct = select(direction * vector(1,1,0),
+                        vector(dot(direction, normalize(tangent)), dot(direction, normalize(bitangent)), 0),
+                        direction_space);
 
-    float blur_rotate = select(radians(rotation), atan2(blur_direct.y, blur_direct.x), dir_mode);
-    vector mag = select(off * a, (off + center) * vector(blur_length,0,0), dir_mode);
+    vector world_blur_direct = select(transform(TBN, direction), direction, direction_space);
+    vector world_blur_vec = select(transform(TBN, a * off), (off.x + center) * world_blur_direct, dir_mode);
+    vector obj_blur_vec = transform(1/obj_to_world, world_blur_vec);
 
-    texture_offset = mix(vector(0), rotate(mag, blur_rotate, vector(0,0,1)), radius * 0.01);
+    float uv_blur_length = length(uv_blur_direct);
+    vector uv_space = select(vector(0.001), vector(0.1/length(dPdu), 0.1/length(dPdv), 0.), space_select);
+    vector xyz_space = select(vector(0.01), vector(0.01), space_select);
+
+    uv_blur_direct /= uv_blur_length;
+
+    float uv_blur_rotate = select(radians(rotation), atan2(uv_blur_direct.y, uv_blur_direct.x), dir_mode);
+    vector uv_blur_vec = select(off * a, (off.x + center) * vector(uv_blur_length,0,0), dir_mode);
+
+    uv_blur_vec = space_select == 1 ? transform(obj_to_world, uv_blur_vec) : uv_blur_vec;
+
+    UV_offset = rotate(uv_blur_vec, uv_blur_rotate, vector(0,0,1)) * strength * uv_space;
+    object_offset = select(rotate(obj_blur_vec, radians(rotation), Ng), obj_blur_vec, dir_mode) * strength * xyz_space;
+    world_offset = select(rotate(world_blur_vec, radians(rotation), Ng), world_blur_vec, dir_mode) * strength * xyz_space;
 }
