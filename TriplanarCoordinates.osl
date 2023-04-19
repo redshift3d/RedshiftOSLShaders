@@ -127,7 +127,7 @@ shader TriplanarCoordinates(
     vector rotation = 0
     [[string label="Rotate", string page="Projection"]],
     float uniform_scaling = 0.5
-    [[string label="Uniform Scale", string page="Projection", float sensitivity=0.1]],
+    [[string label="Uniform Scale", string page="Projection", float sensitivity=0.1, float slidermin=0, float slidermax=10]],
     vector scaling = 1
     [[string label="Scale", string page="Projection", float sensitivity=0.1]],
     output point UV_Offset=0,
