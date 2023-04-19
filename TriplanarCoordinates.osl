@@ -144,9 +144,9 @@ shader TriplanarCoordinates(
     triplanar_normals tangents = triplanar_coords.tangents;
 
     vector heights = vector(
-        texture(height_texture, planes.x.x, 1 - planes.x.y),
-        texture(height_texture, planes.y.x, 1 - planes.y.y),
-        texture(height_texture, planes.z.x, 1 - planes.z.y)
+        texture(height_texture, planes.x.x, 1 - planes.x.y, "missingcolor", color(0.5)),
+        texture(height_texture, planes.y.x, 1 - planes.y.y, "missingcolor", color(0.5)),
+        texture(height_texture, planes.z.x, 1 - planes.z.y, "missingcolor", color(0.5))
     ) * 2 - 1;
 
     vector blend_weights = pow(triplanar_blend_weights(heights, height_weight, blend * M_SQRT1_2, norm), gamma);
