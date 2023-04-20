@@ -131,7 +131,8 @@ shader TriplanarCoordinates(
     vector scaling = 1
     [[string label="Scale", string page="Projection", float sensitivity=0.1]],
     output point UV_Offset=0,
-    output vector Weights=0,
+    output vector Texture_Weights=0,
+    output float Edge_Weight=0,
     output matrix Tangent_Space=0
 )
 {
@@ -156,6 +157,7 @@ shader TriplanarCoordinates(
 
     point uv = select(planes.z, select(planes.y, planes.x, rnd.x < blend_weights.x), rnd.x < (blend_weights.x + blend_weights.y));
     vector final_weights = select(vector(0,0,1), select(vector(0,1,0), vector(1,0,0), rnd.x < blend_weights.x), rnd.x < (blend_weights.x + blend_weights.y));
+    float edge_weights = 3 * ((blend_weights.y * blend_weights.z) + (blend_weights.x * blend_weights.y) + (blend_weights.x * blend_weights.z));
 
     vector tT = select(tangents.z, select(tangents.y, tangents.x, rnd.x < blend_weights.x), rnd.x < (blend_weights.x + blend_weights.y));
     vector tB = cross(tT, Ng);
@@ -168,6 +170,7 @@ shader TriplanarCoordinates(
     );
 
     UV_Offset = uv - point(u, v, 0);
-    Weights = final_weights;
+    Texture_Weights = final_weights;
+    Edge_Weight = edge_weights;
     Tangent_Space = tTBN;
 }
