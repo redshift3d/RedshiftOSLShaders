@@ -121,7 +121,7 @@ shader TriplanarCoordinates(
     string height_texture = ""
     [[string label="Texture", string widget="filename", string page="Height"]],
     float noise_weight = 0
-    [[string label="Weight", string widget="number", string page="Noise", float min=0, float max=10, float slidermin=0, float slidermax=1]],
+    [[string label="Weight", string widget="number", string page="Noise", float min=0, float max=2, float slidermin=0, float slidermax=1]],
     float noise_uniform_scale = 1
     [[string label="Uniform Scale", string widget="number", string page="Noise", float min=0.0001, float slidermin=0.1, float slidermax=10]],
     vector noise_scale = 1
