@@ -211,6 +211,10 @@ A collection of [Open Shading Language (OSL)](https://github.com/AcademySoftware
 
 - [Scratches.osl 📝](Scratches.osl)
 
+### Shader Switch 32
+
+- [ShaderSwitch32.osl 📝](ShaderSwitch32.osl)
+
 ### Shapes
 
 ![](Shapes.jpg)
