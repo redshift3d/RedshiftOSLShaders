@@ -205,6 +205,8 @@ A collection of [Open Shading Language (OSL)](https://github.com/AcademySoftware
 
 - [RandomBitmaps.osl 📝](RandomBitmaps.osl)
 
+### Random Tiles
+
 ![](RandomTiles.jpg)
 
 - [RandomTiles.osl 📝](RandomTiles.osl)
