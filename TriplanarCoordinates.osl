@@ -117,19 +117,21 @@ shader TriplanarCoordinates(
     float gamma = 2
     [[string label="Blend Curve", string widget="number", string page="Blending", float min=0.5, float slidermin=0.5, float slidermax=10]],
     float height_weight = 1
-    [[string label="Weight", string widget="number", string page="Height", float min=0, float max=2, float slidermin=0, float slidermax=1]],
+    [[string label="Height Weight", string widget="number", string page="Height", float min=0, float max=2, float slidermin=0, float slidermax=1]],
     string height_texture = ""
-    [[string label="Texture", string widget="filename", string page="Height"]],
+    [[string label="Height Texture", string widget="filename", string page="Height"]],
     float noise_weight = 0
-    [[string label="Weight", string widget="number", string page="Noise", float min=0, float max=2, float slidermin=0, float slidermax=1]],
+    [[string label="Noise Weight", string widget="number", string page="Noise", float min=0, float max=2, float slidermin=0, float slidermax=1]],
     float noise_uniform_scale = 1
-    [[string label="Uniform Scale", string widget="number", string page="Noise", float min=0.0001, float slidermin=0.1, float slidermax=10]],
+    [[string label="Noise Uniform Scale", string widget="number", string page="Noise", float min=0.0001, float slidermin=0.1, float slidermax=10]],
     vector noise_scale = 1
-    [[string label="Scale", string page="Noise", float sensitivity=0.1]],
+    [[string label="Noise Scale", string page="Noise", float sensitivity=0.1]],
     vector noise_offset = 0
-    [[string label="Offset", string widget="number", string page="Noise"]],
+    [[string label="Noise Offset", string widget="number", string page="Noise"]],
+    int noise_seed = 12345
+    [[string label="Noise Random Seed", string widget="number", string page="Noise"]],
     int space = 0
-    [[string label="Space", string page="Projection", string widget="mapper", string options="Object Space:0|World Space:1"]],
+    [[string label="Projection Space", string page="Projection", string widget="mapper", string options="Object Space:0|World Space:1"]],
     point translation = 0
     [[string label="Translate", string page="Projection", float sensitivity=0.1]],
     vector rotation = 0
@@ -156,7 +158,7 @@ shader TriplanarCoordinates(
         texture(height_texture, planes.x.x, 1 - planes.x.y, "missingcolor", color(0.5)),
         texture(height_texture, planes.y.x, 1 - planes.y.y, "missingcolor", color(0.5)),
         texture(height_texture, planes.z.x, 1 - planes.z.y, "missingcolor", color(0.5))
-    ) * 2 - 1) + mix(0, noise("perlin", P / (noise_uniform_scale * noise_scale) + noise_offset), noise_weight);
+    ) * 2 - 1) + mix(0, noise("perlin", P / (noise_uniform_scale * noise_scale) + noise_offset, noise_seed), noise_weight);
 
     vector blend_weights = pow(triplanar_blend_weights(heights, blend * M_SQRT1_2, norm), gamma);
     blend_weights /= dot(blend_weights, vector(1));
