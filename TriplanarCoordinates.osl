@@ -1,4 +1,4 @@
-// Triplanar Coordinates Shader - builds triplanar coordinates that can connect to UV offsets and apply the projection to textures
+// Triplanar Coordinates Shader - Triplanar coordinates to connect with UV offsets to apply the projection
 /*
    Copyright 2023 Edward Darby Edelen
 
