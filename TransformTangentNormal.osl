@@ -20,26 +20,28 @@ shader TransformTangentNormal(
     [[string label = "Normal Texture"]],
     vector tangent_in = 0
     [[string label="Tangent Input"]],
+    float tangent_rotation = 0
+    [[string label = "Tangent Rotation", string page="Transform", float slidermin = -180, float slidermax = 180]],
     matrix tangent_space = matrix(1)
     [[string label = "Tangent Space", string page="Transform"]],
-    float tangent_rotation = 0
-    [[string label = "Tangent Rotation", string page="Transform"]],
     output normal transformed_normal = normal(0,0,1)
 )
 {
     vector T = select(normalize(dPdu), tangent_in, isconnected(tangent_in));
     vector B = cross(T, Ng);
 
-    matrix TBN = isconnected(tangent_space) ? matrix(
+    matrix TBN = matrix(
         T.x,  T.y,  T.z,  0,
         B.x,  B.y,  B.z,  0,
         Ng.x, Ng.y, Ng.z, 0,
         0,    0,    0,    1
-    ) : matrix(1);
+    );
 
     vector unbiased_normal = normalize(normal_input * vector(2) - vector(1));
 
-    vector result = normalize(rotate(transform(tangent_space / TBN, unbiased_normal), radians(tangent_rotation), vector(0,0,1)));
+    vector result = rotate(unbiased_normal, radians(tangent_rotation), vector(0,0,-1));
+
+    result = isconnected(tangent_space) ? normalize(transform(tangent_space / TBN, result)) : result;
 
     transformed_normal = (result + vector(1)) * vector(0.5);
 }
