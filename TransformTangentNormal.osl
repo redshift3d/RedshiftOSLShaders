@@ -1,4 +1,4 @@
-// Transform Tangent Normal Shader - applies a matrix transform to a tangent space normal map
+// Transform Tangent Normal Shader - applies a matrix transform or a rotation to a tangent space normal map
 /*
    Copyright 2023 Edward Darby Edelen
 
@@ -16,12 +16,14 @@
 */
 
 shader TransformTangentNormal(
-    color normal_input = normal(0,0,1)
+    color normal_input = color(0,0,1)
     [[string label = "Normal Texture"]],
     vector tangent_in = 0
-    [[string label="Tangent In"]],
+    [[string label="Tangent Input"]],
     matrix tangent_space = matrix(1)
-    [[string label = "Tangent Space"]],
+    [[string label = "Tangent Space", string page="Transform"]],
+    float tangent_rotation = 0
+    [[string label = "Tangent Rotation", string page="Transform"]],
     output normal transformed_normal = normal(0,0,1)
 )
 {
@@ -37,7 +39,7 @@ shader TransformTangentNormal(
 
     vector unbiased_normal = normalize(normal_input * vector(2) - vector(1));
 
-    vector result = normalize(transform(tangent_space / TBN, unbiased_normal));
+    vector result = normalize(rotate(transform(tangent_space / TBN, unbiased_normal), radians(tangent_rotation), vector(0,0,1)));
 
     transformed_normal = (result + vector(1)) * vector(0.5);
 }
