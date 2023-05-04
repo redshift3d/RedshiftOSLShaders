@@ -70,10 +70,9 @@ vector triplanar_blend_weights(vector heights, float delta, vector norm)
 
 triplanar_data triplanar_coordinates(point translate, vector rotation, vector scale, vector norm, int space)
 {
-    matrix projection = space == 1 ? matrix(1) : matrix("object","world");
-    matrix projection_alt = space == 1 ? matrix(1) : matrix("world","object");
+    matrix projection = space == 1 ? matrix(1) : matrix("world","object");
     point translation = translate * scale;
-    point uvw = transform(projection_alt, P) * scale;
+    point uvw = transform(projection, P) * scale;
     triplanar_uvws uvw_planes = triplanar_uvws(
         uvw,
         uvw,
