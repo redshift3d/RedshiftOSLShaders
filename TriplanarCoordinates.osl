@@ -1,0 +1,185 @@
+// Triplanar Coordinates Shader - Triplanar coordinates to connect with UV offsets to apply the projection
+/*
+   Copyright 2023 Edward Darby Edelen
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+*/
+
+struct triplanar_normals
+// These should be stored as normals
+// Storing as vectors until the transform() issue is resolved
+{
+    vector x;
+    vector y;
+    vector z;
+};
+
+struct triplanar_uvws
+{
+    point x;
+    point y;
+    point z;
+};
+
+struct triplanar_data
+{
+    triplanar_uvws uvws;
+    triplanar_normals tangents;
+};
+
+float soft_threshold(float a, float threshold, float delta)
+{
+    return clamp((a - threshold + delta) / (clamp(delta, 0.0001, 10000)), 0, 1);
+}
+
+float soft_twin_threshold(float a, float thresh_a, float thresh_b, float delta)
+{
+    return min(soft_threshold(a, thresh_a, delta), soft_threshold(a, thresh_b, delta));
+}
+
+vector triplanar_heightblend(vector heights, float delta)
+{
+    float height_start = max(max(heights.x, heights.y), heights.z) - delta;
+    vector new_heights = max(heights - vector(height_start), vector(0));
+    vector blend = vector(
+        soft_twin_threshold(heights.x, heights.y, heights.z, delta),
+        soft_twin_threshold(heights.y, heights.x, heights.z, delta),
+        soft_twin_threshold(heights.z, heights.x, heights.y, delta)
+    );
+
+    return blend;
+}
+
+vector triplanar_blend_weights(vector heights, float delta, vector norm)
+{
+    vector n = abs(norm);
+
+    vector blend = triplanar_heightblend((heights + vector(1)) * n, delta);
+    return blend / dot(blend, vector(1));
+}
+
+triplanar_data triplanar_coordinates(point translate, vector rotation, vector scale, vector norm, int space)
+{
+    matrix projection = space == 1 ? matrix(1) : matrix("world","object");
+    point translation = translate * scale;
+    point uvw = transform(projection, P) * scale;
+    triplanar_uvws uvw_planes = triplanar_uvws(
+        uvw,
+        uvw,
+        uvw
+    );
+
+    triplanar_normals tangents = triplanar_normals(transform(projection, vector(0,0,1)), transform(projection, vector(1,0,0)), transform(projection, vector(1,0,0)));
+
+    vector flips = sign(vector(dot(norm, vector(1,0,0)), dot(norm, vector(0,1,0)), dot(norm, vector(0,0,1))));
+
+    uvw_planes.x = point(uvw_planes.x.z, uvw_planes.x.y, 0);
+    uvw_planes.y = point(uvw_planes.y.x, uvw_planes.y.z, 0);
+    uvw_planes.z = point(uvw_planes.z.x, uvw_planes.z.y, 0);
+
+    uvw_planes.x = rotate(uvw_planes.x, rotation.x, vector(0,0,1)) + point(translation.z, translation.y, 0);
+    uvw_planes.y = rotate(uvw_planes.y, rotation.y, vector(0,0,1)) + point(translation.x, translation.z, 0);
+    uvw_planes.z = rotate(uvw_planes.z, rotation.z, vector(0,0,1)) + point(translation.x, translation.y, 0);
+
+    tangents.x = rotate(tangents.x, rotation.x, vector(1,0,0));
+    tangents.y = rotate(tangents.y, rotation.y, vector(0,1,0));
+    tangents.z = rotate(tangents.z, rotation.z, vector(0,0,-1));
+
+    uvw_planes.x *= vector(flips.x, 1, 1);
+    uvw_planes.y *= vector(flips.y, 1, 1);
+    uvw_planes.z *= vector(-flips.z, 1, 1);
+    tangents.x *= flips.x;
+    tangents.y *= flips.y;
+    tangents.z *= -flips.z;
+
+    triplanar_data triplanar_coords;
+
+    triplanar_coords.uvws = uvw_planes;
+    triplanar_coords.tangents = tangents;
+
+    return triplanar_coords;
+}
+
+shader TriplanarCoordinates(
+    float blend = 0.1
+    [[string label="Blend Amount", string widget="number", string page="Blending", float min=0, float max=1]],
+    float gamma = 2
+    [[string label="Blend Curve", string widget="number", string page="Blending", float min=0.5, float slidermin=0.5, float slidermax=10]],
+    float height_weight = 1
+    [[string label="Height Weight", string widget="number", string page="Height", float min=0, float max=2, float slidermin=0, float slidermax=1]],
+    string height_texture = ""
+    [[string label="Height Texture", string widget="filename", string page="Height"]],
+    float noise_weight = 0
+    [[string label="Noise Weight", string widget="number", string page="Noise", float min=0, float max=2, float slidermin=0, float slidermax=1]],
+    float noise_uniform_scale = 1
+    [[string label="Noise Uniform Scale", string widget="number", string page="Noise", float min=0.0001, float slidermin=0.1, float slidermax=10]],
+    vector noise_scale = 1
+    [[string label="Noise Scale", string page="Noise", float sensitivity=0.1]],
+    vector noise_offset = 0
+    [[string label="Noise Offset", string widget="number", string page="Noise"]],
+    int noise_seed = 12345
+    [[string label="Noise Random Seed", string widget="number", string page="Noise"]],
+    int space = 0
+    [[string label="Projection Space", string page="Projection", string widget="mapper", string options="Object Space:0|World Space:1"]],
+    point translation = 0
+    [[string label="Translate", string page="Projection", float sensitivity=0.1]],
+    vector rotation = 0
+    [[string label="Rotate", string page="Projection"]],
+    float uniform_scaling = 0.5
+    [[string label="Uniform Scale", string page="Projection", float sensitivity=0.1, float slidermin=0, float slidermax=10]],
+    vector scaling = 1
+    [[string label="Scale", string page="Projection", float sensitivity=0.1]],
+    output point UV_Offset=0,
+    output vector Texture_Weights=0,
+    output float Edge_Weight=0,
+    output matrix Tangent_Space=0
+)
+{
+    matrix projection = space == 1 ? matrix(1) : matrix("world","object");
+    vector scale = 0.01 / (uniform_scaling * scaling);
+    vector norm = transform(projection, vector(Ng));
+
+    triplanar_data triplanar_coords = triplanar_coordinates(translation, radians(rotation), scale, norm, space);
+    triplanar_uvws planes = triplanar_coords.uvws;
+    triplanar_normals tangents = triplanar_coords.tangents;
+
+    vector heights = height_weight * (vector(
+        texture(height_texture, planes.x.x, 1 - planes.x.y, "missingcolor", color(0.5)),
+        texture(height_texture, planes.y.x, 1 - planes.y.y, "missingcolor", color(0.5)),
+        texture(height_texture, planes.z.x, 1 - planes.z.y, "missingcolor", color(0.5))
+    ) * 2 - 1) + mix(0, noise("perlin", P / (noise_uniform_scale * noise_scale) + noise_offset, noise_seed), noise_weight);
+
+    vector blend_weights = pow(triplanar_blend_weights(heights, blend * M_SQRT1_2, norm), gamma);
+    blend_weights /= dot(blend_weights, vector(1));
+
+    vector rnd = noise("hash", P);
+
+    point uv = select(planes.z, select(planes.y, planes.x, rnd.x < blend_weights.x), rnd.x < (blend_weights.x + blend_weights.y));
+    vector final_weights = select(vector(0,0,1), select(vector(0,1,0), vector(1,0,0), rnd.x < blend_weights.x), rnd.x < (blend_weights.x + blend_weights.y));
+    float edge_weights = 3 * ((blend_weights.y * blend_weights.z) + (blend_weights.x * blend_weights.y) + (blend_weights.x * blend_weights.z));
+
+    vector tT = select(tangents.z, select(tangents.y, tangents.x, rnd.x < blend_weights.x), rnd.x < (blend_weights.x + blend_weights.y));
+    vector tB = cross(tT, Ng);
+
+    matrix tTBN = matrix(
+        tT.x, tT.y, tT.z, 0,
+        tB.x, tB.y, tB.z, 0,
+        Ng.x, Ng.y, Ng.z, 0,
+        0,    0,    0,    1
+    );
+
+    UV_Offset = uv - point(u, v, 0);
+    Texture_Weights = final_weights;
+    Edge_Weight = edge_weights;
+    Tangent_Space = tTBN;
+}
