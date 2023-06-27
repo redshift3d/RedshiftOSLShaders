@@ -1,0 +1,87 @@
+// Simple stylised shading node by Benjamin Mikhaiel
+shader ToonOutlines(
+    float thickness = 0.5,  //mindex's comma
+    float tracedist = 50.0,
+    float tracedistSteep = 100,
+    float steepnessStrength = 1,
+    float threshold = 0,
+    float bias = -10,
+    float Curvature = 0,
+    float curvatureCrunch = 0,
+    output color line = 1,
+    output float dfDxOut = 0,
+    output float dfDyOut = 0,
+    output float fres = 0
+)
+{
+    point points[4] = {point(-1.0, 1.0, 0.0),
+                     point(1.0, 1.0, 0.0), 
+                     point(-1.0, -1.0, 0.0),
+                     point(1.0, -1.0, 0)};
+
+    point finalPoints[8];
+
+    point mainP = transform("world", "camera", P);
+    //x left is -30? right is +30?
+    //y up is +20? bottom is -20
+    //z distance from camera 0 at cam, + value further away from camera
+
+
+
+    fres = pow(1-clamp(dot(N, -normalize(I)), 0, 1), steepnessStrength);
+
+    float scaledTraceDepth = mix(tracedistSteep, tracedist, fres);
+    
+    for (int i = 0; i < 4; i++)
+    {
+        // points around the position we want to check for an edge
+        point samplePosition = mainP + (points[i] * thickness);
+        // we then want to move the position towards the camera, so we need to move the bias distance along the vector to the camera.
+        //back to world space?
+        samplePosition = transform("camera", "world", samplePosition);
+        finalPoints[i] = samplePosition - (normalize(I) * bias);
+    }
+
+        for (int i = 4; i < 8; i++)
+    {
+        // points around the position we want to check for an edge
+        point samplePosition = mainP + (points[i - 4] * -thickness);
+        // we then want to move the position towards the camera, so we need to move the bias distance along the vector to the camera.
+        //back to world space?
+        samplePosition = transform("camera", "world", samplePosition);
+        finalPoints[i] = samplePosition - (normalize(I) * bias);
+    }
+
+    vector rayDir = normalize(I) * vector(-1.0, -1.0, -1.0);
+    
+    float traceXA = trace(finalPoints[0], rayDir, "maxdist", scaledTraceDepth);
+    float traceXB = trace(finalPoints[1], rayDir, "maxdist", scaledTraceDepth);
+    float traceYA = trace(finalPoints[2], rayDir, "maxdist", scaledTraceDepth);
+    float traceYB = trace(finalPoints[3], rayDir, "maxdist", scaledTraceDepth);
+    float traceXC = trace(finalPoints[4], rayDir, "maxdist", scaledTraceDepth);
+    float traceXD = trace(finalPoints[5], rayDir, "maxdist", scaledTraceDepth);
+    float traceYE = trace(finalPoints[6], rayDir, "maxdist", scaledTraceDepth);
+    float traceYF = trace(finalPoints[7], rayDir, "maxdist", scaledTraceDepth);
+
+    float dfDx = abs(traceXA - traceXB);
+    float dfDy = abs(traceYB - traceYB);
+    float dfDxB = abs(traceXC - traceXD);
+    float dfDyB = abs(traceYE - traceYF);
+    if (dfDx + dfDy + (Curvature - curvatureCrunch) > threshold)
+    {
+        line = 1;
+    }
+    else
+    {
+        line = 0;
+    }
+
+    if ((dfDxB + dfDyB) > threshold)
+    {
+        line += 1;
+    }
+    else
+    {
+        line += 0;
+    }
+}
