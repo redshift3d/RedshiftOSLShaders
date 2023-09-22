@@ -24,7 +24,7 @@ shader TransformTangentNormal(
     [[string label = "Tangent Rotation", string page="Transform", float slidermin = -180, float slidermax = 180]],
     matrix tangent_space = matrix(1)
     [[string label = "Tangent Space", string page="Transform"]],
-    output normal transformed_normal = normal(0,0,1)
+    output normal Transformed_Normal = normal(0,0,1)
 )
 {
     vector T = select(normalize(dPdu), tangent_in, isconnected(tangent_in));
