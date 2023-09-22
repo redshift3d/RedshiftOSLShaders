@@ -105,7 +105,7 @@ shader HexTileCoordinates(
     float blend = 0.2
     [[string label="Blend Amount", string page="Blending", float min=0, float max=1, float slidermin=0, float slidermax=1]],
     float gamma = 2
-    [[string label="Blend Curve", string widget="number", string page="Blending", float min=0.5, float slidermin=0.5, float slidermax=10]],
+    [[string label="Blend Curve", string widget="number", string page="Blending", float min=0.5, float max=50, float slidermin=0.5, float slidermax=10]],
     float height_weight = 1
     [[string label="Height Weight", string page="Height", float min = 0, float max = 2, float slidermin=0, float slidermax=1]],
     string height_texture = ""
