@@ -142,7 +142,8 @@ shader TriplanarCoordinates(
     output point UV_Offset=0,
     output vector Texture_Weights=0,
     output float Edge_Weight=0,
-    output matrix Tangent_Space=0
+    output matrix Tangent_Space=0,
+    output vector Tangent_Out=0
 )
 {
     matrix projection = space == 1 ? matrix(1) : matrix("world","object");
@@ -182,4 +183,5 @@ shader TriplanarCoordinates(
     Texture_Weights = final_weights;
     Edge_Weight = edge_weights;
     Tangent_Space = tTBN;
+    Tangent_Out = tT;
 }
