@@ -43,5 +43,5 @@ shader TransformTangentNormal(
 
     result = isconnected(tangent_space) ? normalize(transform(tangent_space / TBN, result)) : result;
 
-    transformed_normal = (result + vector(1)) * vector(0.5);
+    Transformed_Normal = (result + vector(1)) * vector(0.5);
 }
