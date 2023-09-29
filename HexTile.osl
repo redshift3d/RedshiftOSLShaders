@@ -126,6 +126,8 @@ shader HexTileCoordinates(
     [[string label="Random Translate", string page="Random", float sensitivity=0.01]],
     float rotation=180
     [[string label="Random Rotate", string page="Random", float slidermin=0, float slidermax=360]],
+    int rotation_steps=0
+    [[string label="Rotation Steps", string page="Random", int min=0]],
     float scaling=0.2
     [[string label="Random Scale", string page="Random", float min = 0, float max = 2, float slidermin=0, float slidermax=1]],
     point triplanar_uv = 0
@@ -160,13 +162,17 @@ shader HexTileCoordinates(
     float scale2 = mix(1, 0.5 * rnd2.z + 1, scaling);
     float scale3 = mix(1, 0.5 * rnd3.z + 1, scaling);
 
-    point uv1 = scale1 * M_SQRT3 * rotate(uv - center1, rnd1.x * rads, w) + translation * point(rnd1.y, rnd1.z, 0);
-    point uv2 = scale2 * M_SQRT3 * rotate(uv - center2, rnd2.x * rads, w) + translation * point(rnd2.y, rnd2.z, 0);
-    point uv3 = scale3 * M_SQRT3 * rotate(uv - center3, rnd3.x * rads, w) + translation * point(rnd3.y, rnd3.z, 0);
+    float rot1 = select(rnd1.x * rads, round((rnd1.x * rads) * rotation_steps) / rotation_steps, rotation_steps);
+    float rot2 = select(rnd2.x * rads, round((rnd2.x * rads) * rotation_steps) / rotation_steps, rotation_steps);
+    float rot3 = select(rnd3.x * rads, round((rnd3.x * rads) * rotation_steps) / rotation_steps, rotation_steps);
 
-    vector T1 = rotate(T, rnd1.x * rads, Ng);
-    vector T2 = rotate(T, rnd2.x * rads, Ng);
-    vector T3 = rotate(T, rnd3.x * rads, Ng);
+    point uv1 = scale1 * M_SQRT3 * rotate(uv - center1, rot1, w) + translation * point(rnd1.y, rnd1.z, 0);
+    point uv2 = scale2 * M_SQRT3 * rotate(uv - center2, rot2, w) + translation * point(rnd2.y, rnd2.z, 0);
+    point uv3 = scale3 * M_SQRT3 * rotate(uv - center3, rot3, w) + translation * point(rnd3.y, rnd3.z, 0);
+
+    vector T1 = rotate(T, rot1, Ng);
+    vector T2 = rotate(T, rot2, Ng);
+    vector T3 = rotate(T, rot3, Ng);
 
     float height1 = height_weight * (texture(height_texture, uv1.x, uv1.y, "missingcolor", color(0.5)) * 2 - 1);
     float height2 = height_weight * (texture(height_texture, uv2.x, uv2.y, "missingcolor", color(0.5)) * 2 - 1);
