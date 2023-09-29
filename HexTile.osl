@@ -1,25 +1,32 @@
 /*
    Hex Tile Coordinates Shader - hexagonal tile coordinates with randomization to breakup repeating textures
 
-   This shader is based "Practical Real-Time Hex-Tiling" by Morten S. Mikkelsen (2022)
+   This shader is based on "Practical Real-Time Hex-Tiling" by Morten S. Mikkelsen (2022)
    Paper: https://jcgt.org/published/0011/03/05/paper-lowres.pdf
    See also: https://github.com/mmikk/hextile-demo
 */
 
 /*
-   Copyright 2023 Edward Darby Edelen
+   Copyright (c) 2023 Edward Darby Edelen
+   Copyright (c) 2022 mmikk
 
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
+    Permission is hereby granted, free of charge, to any person obtaining a copy
+    of this software and associated documentation files (the "Software"), to deal
+    in the Software without restriction, including without limitation the rights
+    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+    copies of the Software, and to permit persons to whom the Software is
+    furnished to do so, subject to the following conditions:
 
-       http://www.apache.org/licenses/LICENSE-2.0
+    The above copyright notice and this permission notice shall be included in all
+    copies or substantial portions of the Software.
 
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+    SOFTWARE.
 */
 
 #define M_SQRT3 1.7320508075688772935274463415059
@@ -127,7 +134,7 @@ shader HexTileCoordinates(
     float rotation=180
     [[string label="Random Rotate", string page="Random", float slidermin=0, float slidermax=360]],
     int rotation_steps=0
-    [[string label="Rotation Steps", string page="Random", int min=0]],
+    [[string label="Rotation Steps", string page="Random", string widget="number", int min=0, int max=360, int slidermin=0, int slidermax=6]],
     float scaling=0.2
     [[string label="Random Scale", string page="Random", float min = 0, float max = 2, float slidermin=0, float slidermax=1]],
     point triplanar_uv = 0
@@ -162,9 +169,9 @@ shader HexTileCoordinates(
     float scale2 = mix(1, 0.5 * rnd2.z + 1, scaling);
     float scale3 = mix(1, 0.5 * rnd3.z + 1, scaling);
 
-    float rot1 = select(rnd1.x * rads, round((rnd1.x * rads) * rotation_steps) / rotation_steps, rotation_steps);
-    float rot2 = select(rnd2.x * rads, round((rnd2.x * rads) * rotation_steps) / rotation_steps, rotation_steps);
-    float rot3 = select(rnd3.x * rads, round((rnd3.x * rads) * rotation_steps) / rotation_steps, rotation_steps);
+    float rot1 = select(rnd1.x * rads, (round(rnd1.x * rotation_steps) * rads) / rotation_steps, rotation_steps);
+    float rot2 = select(rnd2.x * rads, (round(rnd2.x * rotation_steps) * rads) / rotation_steps, rotation_steps);
+    float rot3 = select(rnd3.x * rads, (round(rnd3.x * rotation_steps) * rads) / rotation_steps, rotation_steps);
 
     point uv1 = scale1 * M_SQRT3 * rotate(uv - center1, rot1, w) + translation * point(rnd1.y, rnd1.z, 0);
     point uv2 = scale2 * M_SQRT3 * rotate(uv - center2, rot2, w) + translation * point(rnd2.y, rnd2.z, 0);
