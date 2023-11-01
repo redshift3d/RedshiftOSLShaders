@@ -1,0 +1,216 @@
+/*
+   Hex Tile Coordinates Shader - hexagonal tile coordinates with randomization to breakup repeating textures
+
+   This shader is based on "Practical Real-Time Hex-Tiling" by Morten S. Mikkelsen (2022)
+   Paper: https://jcgt.org/published/0011/03/05/paper-lowres.pdf
+   See also: https://github.com/mmikk/hextile-demo
+*/
+
+/*
+   Copyright (c) 2023 Edward Darby Edelen
+   Copyright (c) 2022 mmikk
+
+    Permission is hereby granted, free of charge, to any person obtaining a copy
+    of this software and associated documentation files (the "Software"), to deal
+    in the Software without restriction, including without limitation the rights
+    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+    copies of the Software, and to permit persons to whom the Software is
+    furnished to do so, subject to the following conditions:
+
+    The above copyright notice and this permission notice shall be included in all
+    copies or substantial portions of the Software.
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+    SOFTWARE.
+*/
+
+#define M_SQRT3 1.7320508075688772935274463415059
+
+point center_uv(point vertex)
+{
+    return point(0.25 * vertex.x, 0.125 * vertex.x + 0.25 * vertex.y, 0);
+}
+
+vector hex_weights(vector blend_weights, point vertex1, point vertex2, point vertex3)
+{
+    float va = mod(vertex1.x - vertex1.y, 3.0);
+    va = select(va, mod(va, 2.0) + 1, (va > 0)&&(vertex3.x < vertex1.x));
+    float vh = mod(va + 1, 3.0);
+    float vl = mod(va - 1, 3.0);
+
+    float vb = select(vh, vl, vertex1.x < vertex3.x);
+    float vc = select(vl, vh, vertex1.x < vertex3.x);
+
+    vector selector = vector(va, vb, vc);
+
+    vector result;
+
+    result.x = blend_weights[(int)round(selector.x)];
+    result.y = blend_weights[(int)round(selector.y)];
+    result.z = blend_weights[(int)round(selector.z)];
+
+    return result;
+}
+
+void generate_triangle_data(output float w1, output float w2, output float w3,
+    output point v1, output point v2, output point v3,
+    point uv)
+{
+    point skewed_uv = point(4 * uv.x, 4 * uv.y - 2 * uv.x, 0);
+
+    point base_coord = floor(skewed_uv);
+    point bary = mod(skewed_uv, point(1.0));
+    bary.z = 1.0 - bary.x - bary.y;
+
+    float flip = step(0.0, -bary.z);
+    float sign = (2 * flip) - 1;
+
+    w1 = -bary.z * sign;
+    w2 = flip - bary.y * sign;
+    w3 = flip - bary.x * sign;
+
+    v1 = base_coord + point(flip, flip, 0 );
+    v2 = base_coord + point(flip, 1 - flip, 0);
+    v3 = base_coord + point(1 - flip, flip, 0);
+}
+
+
+float soft_threshold(float a, float threshold, float delta)
+{
+    return clamp((a - threshold + delta) / (clamp(delta, 0.0001, 10000)), 0, 1);
+}
+
+float soft_twin_threshold(float a, float thresh_a, float thresh_b, float delta)
+{
+    return min(soft_threshold(a, thresh_a, delta), soft_threshold(a, thresh_b, delta));
+}
+
+vector hex_heightblend(vector heights, float delta)
+{
+    vector blend = vector(
+        soft_twin_threshold(heights.x, heights.y, heights.z, delta),
+        soft_twin_threshold(heights.y, heights.x, heights.z, delta),
+        soft_twin_threshold(heights.z, heights.x, heights.y, delta)
+    );
+
+    return blend;
+}
+
+vector hex_blend_weights(vector heights, float delta)
+{
+    vector blend = hex_heightblend(heights + vector(1), delta);
+    return blend / dot(blend, vector(1));
+}
+
+
+shader HexTileCoordinates(
+    float blend = 0.2
+    [[string label="Blend Amount", string page="Blending", float min=0, float max=1, float slidermin=0, float slidermax=1]],
+    float gamma = 2
+    [[string label="Blend Curve", string widget="number", string page="Blending", float min=0.5, float max=50, float slidermin=0.5, float slidermax=10]],
+    float height_weight = 1
+    [[string label="Height Weight", string page="Height", float min = 0, float max = 2, float slidermin=0, float slidermax=1]],
+    string height_texture = ""
+    [[string label="Height Texture", string widget="filename", string page="Height"]],
+    float noise_weight = 0
+    [[string label="Noise Weight", string widget="number", string page="Noise", float min=0, float max=2, float slidermin=0, float slidermax=1]],
+    float noise_uniform_scale = 1
+    [[string label="Noise Uniform Scale", string widget="number", string page="Noise", float min=0.0001, float slidermin=0.1, float slidermax=10]],
+    vector noise_scale = 1
+    [[string label="Noise Scale", string page="Noise", float sensitivity=0.1]],
+    vector noise_offset = 0
+    [[string label="Noise Offset", string widget="number", string page="Noise"]],
+    int noise_seed = 12345
+    [[string label="Noise Random Seed", string widget="number", string page="Noise"]],
+    int seed = 12345
+    [[string label="Random Seed", string page="Random"]],
+    point translation=1
+    [[string label="Random Translate", string page="Random", float sensitivity=0.01]],
+    float rotation=180
+    [[string label="Random Rotate", string page="Random", float slidermin=0, float slidermax=360]],
+    int rotation_steps=0
+    [[string label="Rotation Steps", string page="Random", string widget="number", int min=0, int max=360, int slidermin=0, int slidermax=6]],
+    float scaling=0.2
+    [[string label="Random Scale", string page="Random", float min = 0, float max = 2, float slidermin=0, float slidermax=1]],
+    point triplanar_uv = 0
+    [[string label="Triplanar UV Offset", string page = "Coordinates"]],
+    vector tangent_in = 0
+    [[string label="Tangent In", string page = "Coordinates"]],,
+    output point UV_Offset=0,
+    output vector Cell_Weights=0,
+    output matrix Tangent_Space=matrix(1)
+)
+{
+    vector T = select(normalize(dPdu), tangent_in, isconnected(tangent_in));
+    point uv = isconnected(triplanar_uv) ? point(u, v, 0) + triplanar_uv : point(u, v, 0);
+
+    float rads = radians(rotation);
+    vector w = vector(0,0,1);
+    float w1, w2, w3;
+    point v1, v2, v3;
+
+    generate_triangle_data(w1, w2, w3, v1, v2, v3, uv);
+
+    point center1 = center_uv(v1);
+    point center2 = center_uv(v2);
+    point center3 = center_uv(v3);
+
+    point rnd1 = (2 * noise("hash", v1 + seed) - 1);
+    point rnd2 = (2 * noise("hash", v2 + seed) - 1);
+    point rnd3 = (2 * noise("hash", v3 + seed) - 1);
+    float rnd_selector = noise("hash", P);
+
+    float scale1 = mix(1, 0.5 * rnd1.z + 1, scaling);
+    float scale2 = mix(1, 0.5 * rnd2.z + 1, scaling);
+    float scale3 = mix(1, 0.5 * rnd3.z + 1, scaling);
+
+    float rot1 = select(rnd1.x * rads, (round(rnd1.x * rotation_steps) * rads) / rotation_steps, rotation_steps);
+    float rot2 = select(rnd2.x * rads, (round(rnd2.x * rotation_steps) * rads) / rotation_steps, rotation_steps);
+    float rot3 = select(rnd3.x * rads, (round(rnd3.x * rotation_steps) * rads) / rotation_steps, rotation_steps);
+
+    point uv1 = scale1 * M_SQRT3 * rotate(uv - center1, rot1, w) + translation * point(rnd1.y, rnd1.z, 0);
+    point uv2 = scale2 * M_SQRT3 * rotate(uv - center2, rot2, w) + translation * point(rnd2.y, rnd2.z, 0);
+    point uv3 = scale3 * M_SQRT3 * rotate(uv - center3, rot3, w) + translation * point(rnd3.y, rnd3.z, 0);
+
+    vector T1 = rotate(T, rot1, Ng);
+    vector T2 = rotate(T, rot2, Ng);
+    vector T3 = rotate(T, rot3, Ng);
+
+    float height1 = height_weight * (texture(height_texture, uv1.x, uv1.y, "missingcolor", color(0.5)) * 2 - 1);
+    float height2 = height_weight * (texture(height_texture, uv2.x, uv2.y, "missingcolor", color(0.5)) * 2 - 1);
+    float height3 = height_weight * (texture(height_texture, uv3.x, uv3.y, "missingcolor", color(0.5)) * 2 - 1);
+
+    float noise1 = noise("perlin", 10 * uv1 / (noise_uniform_scale * noise_scale) + noise_offset, noise_seed);
+    float noise2 = noise("perlin", 10 * uv2 / (noise_uniform_scale * noise_scale) + noise_offset, noise_seed);
+    float noise3 = noise("perlin", 10 * uv3 / (noise_uniform_scale * noise_scale) + noise_offset, noise_seed);
+
+    vector weights = vector(w1, w2, w3);
+
+    vector noise_height = clamp(0.5 * (1 - vector(noise1, noise2, noise3)), 0 , 1);
+
+    vector heights = weights - vector(height1, height2, height3) + mix(0, noise_height, noise_weight);
+
+    vector blend_weights = hex_blend_weights(heights, blend * M_SQRT1_2);
+
+    blend_weights = pow(blend_weights, gamma);
+    blend_weights /= dot(blend_weights, vector(1));
+
+    point tex_uv = select(uv3, select(uv1, uv2, rnd_selector < blend_weights.y), rnd_selector < (blend_weights.x + blend_weights.y));
+
+    vector tT = select(T3, select(T1, T2, rnd_selector < blend_weights.y), rnd_selector < (blend_weights.x + blend_weights.y));
+    vector tB = cross(tT, Ng);
+
+    UV_Offset = (tex_uv + 0.5) - uv;
+    Cell_Weights = hex_weights(blend_weights, v1, v2, v3);
+    Tangent_Space = matrix(
+        tT.x, tT.y, tT.z,  0,
+        tB.x, tB.y, tB.z,  0,
+        Ng.x, Ng.y, Ng.z, 0,
+        0,    0,    0,    1
+    );
+}

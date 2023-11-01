@@ -114,7 +114,7 @@ shader TriplanarCoordinates(
     float blend = 0.1
     [[string label="Blend Amount", string widget="number", string page="Blending", float min=0, float max=1]],
     float gamma = 2
-    [[string label="Blend Curve", string widget="number", string page="Blending", float min=0.5, float slidermin=0.5, float slidermax=10]],
+    [[string label="Blend Curve", string widget="number", string page="Blending", float min=0.5, float max=50, float slidermin=0.5, float slidermax=10]],
     float height_weight = 1
     [[string label="Height Weight", string widget="number", string page="Height", float min=0, float max=2, float slidermin=0, float slidermax=1]],
     string height_texture = ""
@@ -142,7 +142,8 @@ shader TriplanarCoordinates(
     output point UV_Offset=0,
     output vector Texture_Weights=0,
     output float Edge_Weight=0,
-    output matrix Tangent_Space=0
+    output matrix Tangent_Space=0,
+    output vector Tangent_Out=0
 )
 {
     matrix projection = space == 1 ? matrix(1) : matrix("world","object");
@@ -157,7 +158,7 @@ shader TriplanarCoordinates(
         texture(height_texture, planes.x.x, 1 - planes.x.y, "missingcolor", color(0.5)),
         texture(height_texture, planes.y.x, 1 - planes.y.y, "missingcolor", color(0.5)),
         texture(height_texture, planes.z.x, 1 - planes.z.y, "missingcolor", color(0.5))
-    ) * 2 - 1) + mix(0, noise("perlin", P / (noise_uniform_scale * noise_scale) + noise_offset, noise_seed), noise_weight);
+    ) * 2 - 1) + mix(0, noise("perlin", transform(projection, P) / (noise_uniform_scale * noise_scale) + noise_offset, noise_seed), noise_weight);
 
     vector blend_weights = pow(triplanar_blend_weights(heights, blend * M_SQRT1_2, norm), gamma);
     blend_weights /= dot(blend_weights, vector(1));
@@ -182,4 +183,5 @@ shader TriplanarCoordinates(
     Texture_Weights = final_weights;
     Edge_Weight = edge_weights;
     Tangent_Space = tTBN;
+    Tangent_Out = tT;
 }
