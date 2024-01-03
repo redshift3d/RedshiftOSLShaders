@@ -109,6 +109,8 @@ vector hex_blend_weights(vector heights, float delta)
 
 
 shader HexTileCoordinates(
+    float grid_tiles = 1
+    [[string label="Grid Repetitions", float min=.25, float max=1000, float slidermin=0.25, float slidermax=10]],
     float blend = 0.2
     [[string label="Blend Amount", string page="Blending", float min=0, float max=1, float slidermin=0, float slidermax=1]],
     float gamma = 2
@@ -147,6 +149,7 @@ shader HexTileCoordinates(
 )
 {
     vector T = select(normalize(dPdu), tangent_in, isconnected(tangent_in));
+    float tiling = grid_tiles / M_SQRT3;
     point uv = isconnected(triplanar_uv) ? point(u, v, 0) + triplanar_uv : point(u, v, 0);
 
     float rads = radians(rotation);
@@ -154,11 +157,11 @@ shader HexTileCoordinates(
     float w1, w2, w3;
     point v1, v2, v3;
 
-    generate_triangle_data(w1, w2, w3, v1, v2, v3, uv);
+    generate_triangle_data(w1, w2, w3, v1, v2, v3, tiling * uv);
 
-    point center1 = center_uv(v1);
-    point center2 = center_uv(v2);
-    point center3 = center_uv(v3);
+    point center1 = center_uv(v1) / tiling;
+    point center2 = center_uv(v2) / tiling;
+    point center3 = center_uv(v3) / tiling;
 
     point rnd1 = (2 * noise("hash", v1 + seed) - 1);
     point rnd2 = (2 * noise("hash", v2 + seed) - 1);
@@ -173,9 +176,9 @@ shader HexTileCoordinates(
     float rot2 = select(rnd2.x * rads, (round(rnd2.x * rotation_steps) * rads) / rotation_steps, rotation_steps);
     float rot3 = select(rnd3.x * rads, (round(rnd3.x * rotation_steps) * rads) / rotation_steps, rotation_steps);
 
-    point uv1 = scale1 * M_SQRT3 * rotate(uv - center1, rot1, w) + translation * point(rnd1.y, rnd1.z, 0);
-    point uv2 = scale2 * M_SQRT3 * rotate(uv - center2, rot2, w) + translation * point(rnd2.y, rnd2.z, 0);
-    point uv3 = scale3 * M_SQRT3 * rotate(uv - center3, rot3, w) + translation * point(rnd3.y, rnd3.z, 0);
+    point uv1 = tiling * (scale1 * M_SQRT3 * rotate(uv - center1, rot1, w)) + translation * point(rnd1.y, rnd1.z, 0);
+    point uv2 = tiling * (scale2 * M_SQRT3 * rotate(uv - center2, rot2, w)) + translation * point(rnd2.y, rnd2.z, 0);
+    point uv3 = tiling * (scale3 * M_SQRT3 * rotate(uv - center3, rot3, w)) + translation * point(rnd3.y, rnd3.z, 0);
 
     vector T1 = rotate(T, rot1, Ng);
     vector T2 = rotate(T, rot2, Ng);
