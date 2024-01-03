@@ -185,9 +185,9 @@ shader HexTileCoordinates(
     float height2 = height_weight * (texture(height_texture, uv2.x, uv2.y, "missingcolor", color(0.5)) * 2 - 1);
     float height3 = height_weight * (texture(height_texture, uv3.x, uv3.y, "missingcolor", color(0.5)) * 2 - 1);
 
-    float noise1 = noise("perlin", 10 * uv1 / (noise_uniform_scale * noise_scale) + noise_offset, noise_seed);
-    float noise2 = noise("perlin", 10 * uv2 / (noise_uniform_scale * noise_scale) + noise_offset, noise_seed);
-    float noise3 = noise("perlin", 10 * uv3 / (noise_uniform_scale * noise_scale) + noise_offset, noise_seed);
+    float noise1 = noise("perlin", 10 * (uv1 + rnd1) / (noise_uniform_scale * noise_scale) + noise_offset, noise_seed);
+    float noise2 = noise("perlin", 10 * (uv2 + rnd2) / (noise_uniform_scale * noise_scale) + noise_offset, noise_seed);
+    float noise3 = noise("perlin", 10 * (uv3 + rnd3) / (noise_uniform_scale * noise_scale) + noise_offset, noise_seed);
 
     vector weights = vector(w1, w2, w3);
 
