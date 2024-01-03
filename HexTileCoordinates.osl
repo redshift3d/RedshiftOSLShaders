@@ -184,9 +184,9 @@ shader HexTileCoordinates(
     vector T2 = rotate(T, rot2, Ng);
     vector T3 = rotate(T, rot3, Ng);
 
-    float height1 = height_weight * (texture(height_texture, uv1.x, uv1.y, "missingcolor", color(0.5)) * 2 - 1);
-    float height2 = height_weight * (texture(height_texture, uv2.x, uv2.y, "missingcolor", color(0.5)) * 2 - 1);
-    float height3 = height_weight * (texture(height_texture, uv3.x, uv3.y, "missingcolor", color(0.5)) * 2 - 1);
+    float height1 = (texture(height_texture, uv1.x, uv1.y, "missingcolor", color(0.5)) * 2 - 1);
+    float height2 = (texture(height_texture, uv2.x, uv2.y, "missingcolor", color(0.5)) * 2 - 1);
+    float height3 = (texture(height_texture, uv3.x, uv3.y, "missingcolor", color(0.5)) * 2 - 1);
 
     float noise1 = noise("perlin", 10 * (uv1 + rnd1) / (noise_uniform_scale * noise_scale) + noise_offset, noise_seed);
     float noise2 = noise("perlin", 10 * (uv2 + rnd2) / (noise_uniform_scale * noise_scale) + noise_offset, noise_seed);
@@ -196,9 +196,11 @@ shader HexTileCoordinates(
 
     vector noise_height = clamp(0.5 * (1 - vector(noise1, noise2, noise3)), 0 , 1);
 
-    vector heights = weights - vector(height1, height2, height3) + mix(0, noise_height, noise_weight);
+    vector height = vector(height1, height2, height3);
 
-    vector blend_weights = hex_blend_weights(heights, blend * M_SQRT1_2);
+    weights += height_weight * height + mix(0, noise_height, noise_weight);
+
+    vector blend_weights = hex_blend_weights(weights, blend * M_SQRT1_2);
 
     blend_weights = pow(blend_weights, gamma);
     blend_weights /= dot(blend_weights, vector(1));
