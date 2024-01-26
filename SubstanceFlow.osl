@@ -94,18 +94,18 @@ shader SubstanceFlow
 	]],
 	float Time = 0
 	[[
-	float min = 0,
-	float max = 100
+	float slidermin = 0,
+	float slidermax = 100
 	]],
 	int steps = 12
 	[[
-	int min = 1,
-	int max = 25
+	int slidermin = 1,
+	int slidermax = 25
 	]],
 	float scale = 1
 	[[
-	float min = 0,
-	float max = 5
+	float slidermin = 0,
+	float slidermax = 100
 	]],
 	
 	int   aces = 0

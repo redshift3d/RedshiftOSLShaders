@@ -22,6 +22,12 @@ A collection of [Open Shading Language (OSL)](https://github.com/AcademySoftware
 
 - [Blackbody.osl 📝](Blackbody.osl)
 
+### Blur
+
+![](Blur.jpg)
+
+- [Blur.osl 📝](Blur.osl)
+
 ### Candle Flame
 
 ![](CandleFlame.jpg)
@@ -33,6 +39,12 @@ A collection of [Open Shading Language (OSL)](https://github.com/AcademySoftware
 ![](Clamp.jpg)
 
 - [Clamp.osl 📝](Clamp.osl)
+
+### Color Jitter
+
+![](ColorJitter.jpg)
+
+- [ColorJitter.osl 📝](ColorJitter.osl)
 
 ### Color Keyer
 
@@ -101,6 +113,12 @@ A collection of [Open Shading Language (OSL)](https://github.com/AcademySoftware
 ![](Hexagon.jpg)
 
 - [Hexagon.osl 📝](Hexagon.osl)
+
+### HexTileCoordinates
+
+![](HexTileCoordinates.jpg)
+
+- [HexTileCoordinates.osl 📝](HexTileCoordinates.osl)
 
 ### Iridescence
 
@@ -177,6 +195,10 @@ A collection of [Open Shading Language (OSL)](https://github.com/AcademySoftware
 
 - [NoiseColor.osl 📝](NoiseColor.osl)
 
+### Normal Rotation
+
+- [NormalRotation.osl 📝](NormalRotation.osl)
+
 ### Paint Colors
 
 ![](PaintColors.jpg)
@@ -205,11 +227,27 @@ A collection of [Open Shading Language (OSL)](https://github.com/AcademySoftware
 
 - [RandomBitmaps.osl 📝](RandomBitmaps.osl)
 
+### Random Tiles
+
+![](RandomTiles.jpg)
+
+- [RandomTiles.osl 📝](RandomTiles.osl)
+
+### Reflectance To IOR
+
+![](ReflectanceToIOR.jpg)
+
+- [ReflectanceToIOR.osl 📝](ReflectanceToIOR.osl)
+
 ### Scratches
 
 ![](Scratches.jpg)
 
 - [Scratches.osl 📝](Scratches.osl)
+
+### Shader Switch 32
+
+- [ShaderSwitch32.osl 📝](ShaderSwitch32.osl)
 
 ### Shapes
 
@@ -263,6 +301,18 @@ A collection of [Open Shading Language (OSL)](https://github.com/AcademySoftware
 ![](TooledSteel.jpg)
 
 - [TooledSteel.osl 📝](TooledSteel.osl)
+
+### Toon Outlines
+
+- [ToonOutlines.osl 📝](ToonOutlines.osl)
+
+### Toon Stylized Pass
+
+- [ToonStylizedPass.osl 📝](ToonStylizedPass.osl)
+
+### Triplanar Coordinates
+
+- [TriplanarCoordinates.osl 📝](TriplanarCoordinates.osl)
 
 ### Turbulent Color
 

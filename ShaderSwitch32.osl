@@ -1,0 +1,102 @@
+////////////////////////////////////////////////////////////////////////////
+// Shader Switch (32-way)
+//
+// An extension on Redshift's built-in 10-way RS Shader Switch. Instead of
+// chaining shaders to achieve more slots, you can use this OSL shader. It
+// utilizes a decision tree to perform the switch with 5 comparisons. One
+// additional comparison is performed only for the first and last input.
+//
+// Author: Geoff Bolton
+// Created: 2023-04-24
+//
+// This work is licensed under a Creative Commons Attribution 3.0 Unported
+// License: https://creativecommons.org/licenses/by/3.0/deed.en_US
+////////////////////////////////////////////////////////////////////////////
+#define INPUT_ID(id) shader ## id
+#define INPUT_DEF(id) color INPUT_ID(id) = 1 [[ string label="Shader "#id ]]
+
+#define CHOOSE2(id0, id1)				\
+	outColor = (index < id1)			\
+		? INPUT_ID(id0)					\
+		: INPUT_ID(id1)
+
+#define CHOOSE(id0, id1, id2, id3)		\
+	if (index < id2) {					\
+		CHOOSE2(id0, id1);				\
+	} else {							\
+		CHOOSE2(id2, id3);				\
+	}
+
+// Left-bounded at id0
+#define CHOOSE_L(id0, id1, id2, id3)	\
+	if (index < id2) {					\
+		outColor = (index < id1)		\
+			? (index == id0				\
+				? INPUT_ID(id0)			\
+				: default_shader)		\
+			: INPUT_ID(id1);			\
+	} else {							\
+		CHOOSE2(id2, id3);				\
+	}
+
+// Right-bounded at id3
+#define CHOOSE_R(id0, id1, id2, id3)	\
+	if (index < id2) {					\
+		CHOOSE2(id0, id1);				\
+	} else {							\
+		outColor = (index < id3)		\
+			? INPUT_ID(id2)				\
+			: (index == id3				\
+				? INPUT_ID(id3)			\
+				: default_shader);		\
+	}
+////////////////////////////////////////////////////////////////////////////
+
+shader ShaderSwitch32(
+	int selector = 0 [[ string label="Shader Selector" ]],
+	int selector_offset = 0 [[ string label="Offset", int connectable=0 ]],
+	INPUT_DEF(0), 	INPUT_DEF(1),	INPUT_DEF(2),	INPUT_DEF(3),
+	INPUT_DEF(4), 	INPUT_DEF(5),	INPUT_DEF(6),	INPUT_DEF(7),
+	INPUT_DEF(8), 	INPUT_DEF(9),	INPUT_DEF(10),	INPUT_DEF(11),
+	INPUT_DEF(12),	INPUT_DEF(13),	INPUT_DEF(14),	INPUT_DEF(15),
+	INPUT_DEF(16),	INPUT_DEF(17),	INPUT_DEF(18),	INPUT_DEF(19),
+	INPUT_DEF(20),	INPUT_DEF(21),	INPUT_DEF(22),	INPUT_DEF(23),
+	INPUT_DEF(24),	INPUT_DEF(25),	INPUT_DEF(26),	INPUT_DEF(27),
+	INPUT_DEF(28),	INPUT_DEF(29),	INPUT_DEF(30),	INPUT_DEF(31),
+	color default_shader = 1 [[ string label="Default Shader" ]],
+	output color outColor = 0,
+	output int outIndex = 0)
+{
+	int index = selector - selector_offset;
+	outIndex = index;
+
+	if (index < 16)	{
+		if (index < 8) {
+			if (index < 4) {
+				CHOOSE_L(0, 1, 2, 3);
+			} else {
+				CHOOSE(4, 5, 6, 7);
+			}
+		} else {
+			if (index < 12) {
+				CHOOSE(8, 9, 10, 11);
+			} else {
+				CHOOSE(12, 13, 14, 15);
+			}
+		}
+	} else {
+		if (index < 24) {
+			if (index < 20) {
+				CHOOSE(16, 17, 18, 19);
+			} else {
+				CHOOSE(20, 21, 22, 23);
+			}
+		} else {
+			if (index < 28) {
+				CHOOSE(24, 25, 26, 27);
+			} else {
+				CHOOSE_R(28, 29, 30, 31);
+			}
+		}
+	}
+}

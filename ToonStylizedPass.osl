@@ -1,0 +1,126 @@
+// Simple stylised shading node by Benjamin Mikhaiel
+// added basic option for point light effect 11/06/2023 (at like 3am)
+
+float frac(float x)
+{
+	return x - floor(x);
+}
+
+float traceShadow(vector lightDir, float shadowBias, float maxDistance)
+{
+    //point traceStart = P + (normalize(lightDir) * shadowBias);
+    float traceRay = trace(P, lightDir, "mindist", shadowBias, "maxdist", maxDistance);
+    return traceRay;
+}
+
+float ShadowOutline(vector lightDir, float shadowBias, float maxDistance, float thickness)
+{
+    vector surfaceOffset = N * (thickness * 1.1);
+    float traceRayA = trace((P + vector(thickness, 0, 0)) + surfaceOffset, lightDir, "mindist", shadowBias, "maxdist", maxDistance);
+    float traceRayB = trace((P + vector(-thickness, 0, 0)) + surfaceOffset, lightDir, "mindist", shadowBias, "maxdist", maxDistance);
+    float traceRayC = trace((P + vector(0, thickness, 0)) + surfaceOffset, lightDir, "mindist", shadowBias, "maxdist", maxDistance);
+    float traceRayD = trace((P + vector(0, -thickness, 0)) + surfaceOffset, lightDir, "mindist", shadowBias, "maxdist", maxDistance);
+    return abs(traceRayA - traceRayB) + abs(traceRayC - traceRayD);
+}
+
+float lambertSimple(vector lightDir)
+{
+    float lambert = dot(N, lightDir);
+    return clamp(lambert, 0, 1);
+}
+
+float steppedRamp(float x, int steps)
+{
+    float stepped = (round(x * steps)) / steps;
+    return stepped;
+}
+
+shader traceRay(
+    vector lightDirection = vector(0,0,0) [[string page = "Light Settings", string label = "Light Dir / Position"]],
+    int UseAsPoint = 0 [[string widget = "checkBox", string page = "Light Settings", string label = "Use as Point Light"]],
+    color lightColor = 1 [[string page = "Light Settings"]],
+    float lightFalloff = 100.0 [[string page = "Light Settings"]],
+    
+
+    color baseColor = color(0.25, 0.25, 0.25) [[string page = "Shading Settings"]],
+	color shadowColor = 0 [[string page = "Shading Settings"]],
+    int stepped = 1 [[string widget = "checkBox", string page = "Shading Settings"]],
+    int lightSteps = 4 [[string page = "Shading Settings"]],
+
+
+    int shadows = 1 [[string widget = "checkBox", string page = "Shadow Settings"]],
+    int softShadows = 0 [[string widget = "checkBox", string page = "Shadow Settings"]],
+    float softness = 0.5 [[string page = "Shadow Settings"]],
+    float shadowBias = 0 [[string page = "Shadow Settings"]],
+    float thickness = 1 [[string page = "Shadow Settings", string label = "Outline Thickness"]],
+
+    
+    float distortionScale = 1.0 [[string page = "Distortion"]],
+    float shadingDistortion = 0.4 [[string page = "Distortion"]],
+
+    int Zup = 0 [[string widget = "checkBox", string page = "Cordinate Settings"]],
+    vector TransformFlipper = vector(1.0,1.0,1.0) [[string page = "Cordinate Settings"]],
+
+	output color cout = 0,
+    output float shadowMask = 0,
+    output color shadowOutline = 0
+)
+{
+    float shading = 0;
+
+    float distortion = shadingDistortion - 0.5;
+    distortion = distortionScale * distortion;
+
+    vector lightDirectionInternal = normalize(lightDirection);
+    point lightPosition = lightDirection;
+    if(Zup)
+    {
+        lightPosition = lightPosition * vector(1.0,1.0,-1.0);
+    }
+
+
+    float maxRayDistance = 999999999;
+    if(UseAsPoint)
+    {   
+        maxRayDistance = distance(lightPosition, P);
+        lightDirectionInternal = normalize(point(lightPosition) - P);
+    }
+
+    vector LightDirOffset = lightDirectionInternal + vector(distortion, distortion, distortion);
+
+
+	float lambert = lambertSimple(LightDirOffset);
+
+    if(shadows)
+    {
+        if(softShadows)
+        {
+	        float f = frac(fmod(cellnoise(P*1234562.0), 1.0));
+            vector randomDirOffset = vector(f - 0.5, f - 0.5, f - 0.5);
+            shading = traceShadow(LightDirOffset + (f * softness), shadowBias, maxRayDistance);
+        }
+        else
+        {
+            shading = traceShadow(LightDirOffset, shadowBias, maxRayDistance);
+            shadowMask = shading - (1-lambert);
+            shadowOutline = ShadowOutline(LightDirOffset, shadowBias, maxRayDistance, thickness);
+        }
+    }
+	shading = lambert * (1-shading);
+
+    if(UseAsPoint)
+    {
+        shading = shading * (1 - (distance(lightPosition, P) / lightFalloff));
+    }
+    //lets put some space between here to see if that fixes it?
+    shading = clamp(shading, 0, 1);
+
+    if(stepped)
+    {
+        shading = steppedRamp(shading, lightSteps);
+    }
+
+    color ColorShading = mix(shadowColor, lightColor, shading);
+    ColorShading = baseColor * ColorShading;
+	cout = ColorShading;
+}
