@@ -150,7 +150,7 @@ shader HexTileCoordinates(
 {
     vector T = select(normalize(dPdu), tangent_in, isconnected(tangent_in));
     float tiling = grid_tiles / M_SQRT3;
-    point uv = isconnected(triplanar_uv) ? point(u, v, 0) + triplanar_uv : point(u, v, 0);
+    point uv = isconnected(triplanar_uv) ? point(u, v, 0) + mod(triplanar_uv, point(1,1,1)) : point(u, v, 0);
 
     float rads = radians(rotation);
     vector w = vector(0,0,1);
