@@ -1,6 +1,6 @@
 // Triplanar Coordinates Shader - Triplanar coordinates to connect with UV offsets to apply the projection
 /*
-   Copyright 2023 Edward Darby Edelen
+   Copyright (c) 2023 Edward Darby Edelen
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -140,10 +140,11 @@ shader TriplanarCoordinates(
     vector scaling = 1
     [[string label="Scale", string page="Projection", float sensitivity=0.1]],
     output point UV_Offset=0,
-    output vector Texture_Weights=0,
+    output point Triplanar_UV=0,
+    output vector Tangent_Out=0,
+    output vector Texture_Weight=0,
     output float Edge_Weight=0,
-    output matrix Tangent_Space=0,
-    output vector Tangent_Out=0
+    output matrix Tangent_Space=0
 )
 {
     matrix projection = space == 1 ? matrix(1) : matrix("world","object");
@@ -180,7 +181,8 @@ shader TriplanarCoordinates(
     );
 
     UV_Offset = uv - point(u, v, 0);
-    Texture_Weights = final_weights;
+    Triplanar_UV = uv;
+    Texture_Weight = final_weights;
     Edge_Weight = edge_weights;
     Tangent_Space = tTBN;
     Tangent_Out = tT;
