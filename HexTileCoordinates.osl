@@ -140,17 +140,18 @@ shader HexTileCoordinates(
     float scaling=0.2
     [[string label="Random Scale", string page="Random", float min = 0, float max = 2, float slidermin=0, float slidermax=1]],
     point triplanar_uv = 0
-    [[string label="Triplanar UV Offset", string page = "Coordinates"]],
+    [[string label="Triplanar UV", string page = "Coordinates"]],
     vector tangent_in = 0
     [[string label="Tangent In", string page = "Coordinates"]],,
     output point UV_Offset=0,
-    output vector Cell_Weights=0,
+    output point HexTile_UV=0,
+    output vector Cell_Weight=0,
     output matrix Tangent_Space=matrix(1)
 )
 {
     vector T = select(normalize(dPdu), tangent_in, isconnected(tangent_in));
     float tiling = grid_tiles / M_SQRT3;
-    point uv = isconnected(triplanar_uv) ? point(u, v, 0) + triplanar_uv : point(u, v, 0);
+    point uv = isconnected(triplanar_uv) ? triplanar_uv : point(u, v, 0);
 
     float rads = radians(rotation);
     vector w = vector(0,0,1);
@@ -210,8 +211,9 @@ shader HexTileCoordinates(
     vector tT = select(T3, select(T1, T2, rnd_selector < blend_weights.y), rnd_selector < (blend_weights.x + blend_weights.y));
     vector tB = cross(tT, Ng);
 
-    UV_Offset = (tex_uv + 0.5) - uv;
-    Cell_Weights = hex_weights(blend_weights, v1, v2, v3);
+    UV_Offset = (tex_uv + point(0.5,0.5,0)) - point(u,v,0);
+    HexTile_UV = tex_uv + point(0.5,0.5,0);
+    Cell_Weight = hex_weights(blend_weights, v1, v2, v3);
     Tangent_Space = matrix(
         tT.x, tT.y, tT.z,  0,
         tB.x, tB.y, tB.z,  0,
