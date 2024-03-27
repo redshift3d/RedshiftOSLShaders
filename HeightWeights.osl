@@ -1,0 +1,118 @@
+// Height Blend Weights Shader - Blend height maps to generate weights for texture/material blending
+/*
+   Copyright (c) 2023 Edward Darby Edelen
+
+    Permission is hereby granted, free of charge, to any person obtaining a copy
+    of this software and associated documentation files (the "Software"), to deal
+    in the Software without restriction, including without limitation the rights
+    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+    copies of the Software, and to permit persons to whom the Software is
+    furnished to do so, subject to the following conditions:
+
+    The above copyright notice and this permission notice shall be included in all
+    copies or substantial portions of the Software.
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+    SOFTWARE.
+*/
+
+struct vector4 {
+    float x, y, z, w;
+};
+
+vector4 __operator__add__ (vector4 a, vector4 b) {
+    return vector4(a.x+b.x, a.y+b.y, a.z+b.z, a.w+b.w);
+}
+
+vector4 __operator__sub__ (vector4 a, vector4 b) {
+    return vector4(a.x-b.x, a.y-b.y, a.z-b.z, a.w-b.w);
+}
+
+vector4 __operator__mul__ (vector4 a, vector4 b) {
+    return vector4(a.x*b.x, a.y*b.y, a.z*b.z, a.w*b.w);
+}
+
+vector4 __operator__mul__ (vector4 a, float b) {
+    return vector4(a.x*b, a.y*b, a.z*b, a.w*b);
+}
+
+vector4 __operator__mul__ (float a, vector4 b) {
+    return vector4(a*b.x, a*b.y, a*b.z, a*b.w);
+}
+
+vector4 __operator__div__ (vector4 a, vector4 b) {
+    return vector4(a.x/b.x, a.y/b.y, a.z/b.z, a.w/b.w);
+}
+
+vector4 __operator__div__ (vector4 a, float b) {
+    return vector4(a.x/b, a.y/b, a.z/b, a.w/b);
+}
+
+vector4 clamp(vector4 a, float low, float high) {
+    return vector4(min(max(a.x,low),high), min(max(a.y,low),high), min(max(a.z,low),high), min(max(a.w,low),high));
+}
+
+vector4 soft_threshold(vector4 a, vector4 threshold, vector4 delta)
+{
+    vector4 soft = clamp(delta * 0.5, 0.0001, 10000);
+    return clamp((a - threshold + soft) / soft, 0, 1);
+}
+
+
+shader HeightBlendWeights(
+    float base_height = 0.0
+    [[string label="Base Height", string widget="number", string page="Base Height", float min=0, float max=1]],
+    float base_height_offset = 0.0
+    [[string label="Height Offset", string widget="number", string page="Base Height", float slidermin=-1, float slidermax=1]],
+    float base_height_scale = 1.0
+    [[string label="Height Scale", string widget="number", string page="Base Height", float slidermin=0, float slidermax=2]],
+    float height_01 = 0.0
+    [[string label="Height", string widget="number", string page="Height Layer 1", float slidermin=0, float slidermax=1]],
+    float height_soft_01 = 0.0
+    [[string label="Height Soft", string widget="number", string page="Height Layer 1", float slidermin=0, float slidermax=1]],
+    float height_offset_01 = 0.0
+    [[string label="Height Offset", string widget="number", string page="Height Layer 1", float slidermin=-1, float slidermax=1]],
+    float height_scale_01 = 1.0
+    [[string label="Height Scale", string widget="number", string page="Height Layer 1", float slidermin=0, float slidermax=2]],
+    float height_02 = 0.0
+    [[string label="Height", string widget="number", string page="Height Layer 2", float slidermin=0, float slidermax=1]],
+    float height_soft_02 = 0.0
+    [[string label="Height Soft", string widget="number", string page="Height Layer 2", float slidermin=0, float slidermax=1]],
+    float height_offset_02 = 0.0
+    [[string label="Height Offset", string widget="number", string page="Height Layer 2", float slidermin=-1, float slidermax=1]],
+    float height_scale_02 = 1.0
+    [[string label="Height Scale", string widget="number", string page="Height Layer 2", float slidermin=0, float slidermax=2]],
+    float height_03 = 0.0
+    [[string label="Height", string widget="number", string page="Height Layer 3", float slidermin=0, float slidermax=1]],
+    float height_soft_03 = 0.0
+    [[string label="Height Soft", string widget="number", string page="Height Layer 3", float slidermin=0, float slidermax=1]],
+    float height_offset_03 = 0.0
+    [[string label="Height Offset", string widget="number", string page="Height Layer 3", float slidermin=-1, float slidermax=1]],
+    float height_scale_03 = 1.0
+    [[string label="Height Scale", string widget="number", string page="Height Layer 3", float slidermin=0, float slidermax=2]],
+    output float Height_01_Blend=0,
+    output float Height_02_Blend=0,
+    output float Height_03_Blend=0
+)
+{
+    float total_base_height = ((base_height - 0.5) * base_height_scale + 0.5) + base_height_offset;
+    float total_height_01 = ((height_01 - 0.5) * height_scale_01 + 0.5) + height_offset_01;
+    float total_height_02 = ((height_02 - 0.5) * height_scale_02 + 0.5) + height_offset_02;
+    float total_height_03 = ((height_03 - 0.5) * height_scale_03 + 0.5) + height_offset_03;
+
+    vector4 total_heights = vector4(total_base_height, total_height_01, total_height_02, total_height_03);
+    vector4 deltas = vector4(0.0, height_soft_01, height_soft_02, height_soft_03);
+    total_heights -= 0.5 * deltas;
+    float max_height = max(total_base_height, max(total_height_01, max(total_height_02, total_height_03)));
+    vector4 thresholds = vector4(max_height,max_height,max_height,max_height) - 0.5 * deltas;
+    vector4 total_weights = soft_threshold(total_heights, thresholds, deltas);
+
+    Height_01_Blend = total_weights.y;
+    Height_02_Blend = total_weights.z;
+    Height_03_Blend = total_weights.w;
+}
