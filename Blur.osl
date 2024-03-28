@@ -16,18 +16,44 @@
    limitations under the License.
 */
 
+vector powerFromUniform(vector vec_in, float power){
+    float u2_sin;
+    float u2_cos;
+
+    float r = pow(sqrt(vec_in.x), power);
+    sincos(M_2PI * vec_in.y, u2_sin, u2_cos);
+    return vector(r * u2_cos, r * u2_sin, 0);
+}
+
+vector exponentialFromUniform(vector vec_in){
+    float u2_sin;
+    float u2_cos;
+
+    float r = -log(vec_in.x);
+    sincos(M_2PI * vec_in.y, u2_sin, u2_cos);
+    return vector(r * u2_cos, r * u2_sin, 0);
+}
+
 vector gaussianFromUniform(vector vec_in){
     float u2_sin;
     float u2_cos;
 
-    sincos(M_2PI * vec_in.y, u2_sin, u2_cos);
     float r = sqrt(-2 * log(vec_in.x));
+    sincos(M_2PI * vec_in.y, u2_sin, u2_cos);
     return vector(r * u2_cos, r * u2_sin, 0);
+}
+
+vector samplePoints(vector vec_in, float power, int mode){
+    if(mode==0) return gaussianFromUniform(vec_in);
+    if(mode==1) return powerFromUniform(vec_in, power);
+    if(mode==2) return exponentialFromUniform(vec_in);
 }
 
 shader Blur(
     float strength = 10 [[string label="Strength", string page="Blur", string widget="number", int slider=1, float slidermin = 0, float slidermax=100, float min=0, float max=1000000000, float sensitivity = 0.1]],
     int space_select = 0 [[string label="Space", string page="Blur", string widget="mapper", string options="UV:0|Object:1|World:2"]],
+    int kernel_select = 0 [[string label="Blur", string page="Blur", string widget="mapper", string options="Gaussian:0|Power:1|Exponential:2"]],
+    float power = 1 [[string label="Power", string page="Blur", int slider=1, float min = -10000.0, float max = 10000.0, float slidermin = 0.0, float slidermax = 10.0]],
     int dir_mode = 0 [[string label="Direction Mode", string page="Blur",
                     string widget="mapper", string options="Anisotropy:0|Vector Blur:1", int connectable=0]],
     float aniso = 0 [[string label="Anisotropy", string page="Anisotropy", string widget = "number", int slider=1,float min=-1,float max=1]],
@@ -49,17 +75,17 @@ shader Blur(
                     Ng.x, Ng.y, Ng.z, 0,
                     0, 0, 0, 0);
 
-    float obj_scale = space_select == 1 ? length(transform(matrix("object","world"), vector(1))) : 1;
+    float obj_scale = space_select == 1 ? length(transform(matrix("object","world"), normalize(vector(1)))) : 1;
     vector a = vector(1 + aniso, 1 - aniso, 0);
-    vector zrnd = gaussianFromUniform(noise("hash", vector(1) - P));
-    vector off = gaussianFromUniform(noise("hash", P)) + vector(0,0,zrnd.x);
+    vector zrnd = samplePoints(noise("hash", vector(1) - P), power, kernel_select);
+    vector off = samplePoints(noise("hash", P), power, kernel_select) + vector(0,0,zrnd.x);
     vector uv_blur_direct = select(direction * vector(1,1,0),
                         vector(dot(direction, normalize(tangent)), dot(direction, normalize(bitangent)), 0),
                         direction_space);
 
     vector world_blur_direct = select(transform(TBN, direction), direction, direction_space);
     vector world_blur_vec = select(transform(TBN, a * off), (off.x + center) * world_blur_direct, dir_mode);
-    vector obj_blur_vec = transform(1/obj_to_world, world_blur_vec);
+    vector obj_blur_vec = transform(matrix("world", "object"), world_blur_vec);
 
     float uv_blur_length = length(uv_blur_direct);
     vector uv_space = select(vector(0.001), vector(0.1/length(dPdu), 0.1/length(dPdv), 0.), space_select);
