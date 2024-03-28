@@ -51,7 +51,8 @@ shader Blur(
                     bitangent.x, bitangent.y, bitangent.z, 0,
                     Ng.x, Ng.y, Ng.z, 0,
                     0, 0, 0, 0);
-    matrix obj_to_world = matrix("object", "world");
+
+    float obj_scale = space_select == 1 ? length(transform(matrix("object","world"), vector(1))) : 1;
     vector a = vector(1 + aniso, 1 - aniso, 0);
     vector zrnd = gaussianFromUniform(noise("hash", vector(1) - P));
     vector off = gaussianFromUniform(noise("hash", P)) + vector(0,0,zrnd.x);
@@ -72,9 +73,7 @@ shader Blur(
     float uv_blur_rotate = select(radians(rotation), atan2(uv_blur_direct.y, uv_blur_direct.x), dir_mode);
     vector uv_blur_vec = select(off * a, (off.x + center) * vector(uv_blur_length,0,0), dir_mode);
 
-    uv_blur_vec = space_select == 1 ? transform(obj_to_world, uv_blur_vec) : uv_blur_vec;
-
-    UV_offset = rotate(uv_blur_vec, uv_blur_rotate, vector(0,0,1)) * strength * uv_space;
+    UV_offset = rotate(uv_blur_vec, uv_blur_rotate, vector(0,0,1)) * strength * uv_space * obj_scale;
     object_offset = select(rotate(obj_blur_vec, radians(rotation), Ng), obj_blur_vec, dir_mode) * strength * xyz_space;
     world_offset = select(rotate(world_blur_vec, radians(rotation), Ng), world_blur_vec, dir_mode) * strength * xyz_space;
 }
