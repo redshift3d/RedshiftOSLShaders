@@ -1,8 +1,5 @@
-// Blur Shader - the output of this OSL shader can be attached to a Redshift Texture's Offset port to create a gaussian blur
+// Blur Shader - the output of this OSL shader can be attached to a Redshift Texture's Offset port to create a blur
 // Written by Darby Edelen based on work by Patrick Letourneau
-// Updated 3/15/23 - Added vector direction mode; added coordinate space selection for blur strength and vector direction.
-// Updated 3/16/23 - Modified coordinate scale. Changed range on strength slider. Modified limits on sliders.
-// Updated 3/19/23 - Renamed output to UV Offset and added XYZ Offset for use with Noise or other shaders expecting 3D coordinates.
 /*
    Copyright 2023 Edward Darby Edelen
 
