@@ -63,47 +63,51 @@ vector4 soft_threshold(vector4 a, vector4 threshold, vector4 delta)
     return clamp((a - threshold + soft) / soft, 0, 1);
 }
 
-
 shader HeightBlendWeights(
+    int height_mode = 0
+    [[string label="Height From", string widget="mapper", string options = "ACEScg Luminance:0|Rec.709 Luminance:1|Average:2|Red:3|Green:4|Blue:5"]],
     float base_height = 0.0
     [[string label="Base Height", string widget="number", string page="Base Height", float min=0, float max=1]],
     float base_height_offset = 0.0
-    [[string label="Height Offset", string widget="number", string page="Base Height", float slidermin=-1, float slidermax=1]],
+    [[string label="Base Height Offset", string widget="number", string page="Base Height", float slidermin=-1, float slidermax=1]],
     float base_height_scale = 1.0
-    [[string label="Height Scale", string widget="number", string page="Base Height", float slidermin=0, float slidermax=2]],
+    [[string label="Base Height Scale", string widget="number", string page="Base Height", float slidermin=0, float slidermax=2]],
     float height_01 = 0.0
-    [[string label="Height", string widget="number", string page="Height Layer 1", float slidermin=0, float slidermax=1]],
+    [[string label="Height 01", string widget="number", string page="Height Layer 1", float slidermin=0, float slidermax=1]],
     float height_soft_01 = 0.0
-    [[string label="Height Soft", string widget="number", string page="Height Layer 1", float slidermin=0, float slidermax=1]],
+    [[string label="Height 01 Soft", string widget="number", string page="Height Layer 1", float slidermin=0, float slidermax=1]],
     float height_offset_01 = 0.0
-    [[string label="Height Offset", string widget="number", string page="Height Layer 1", float slidermin=-1, float slidermax=1]],
+    [[string label="Height 01 Offset", string widget="number", string page="Height Layer 1", float slidermin=-1, float slidermax=1]],
     float height_scale_01 = 1.0
-    [[string label="Height Scale", string widget="number", string page="Height Layer 1", float slidermin=0, float slidermax=2]],
+    [[string label="Height 01 Scale", string widget="number", string page="Height Layer 1", float slidermin=0, float slidermax=2]],
     float height_02 = 0.0
-    [[string label="Height", string widget="number", string page="Height Layer 2", float slidermin=0, float slidermax=1]],
+    [[string label="Height 02", string widget="number", string page="Height Layer 2", float slidermin=0, float slidermax=1]],
     float height_soft_02 = 0.0
-    [[string label="Height Soft", string widget="number", string page="Height Layer 2", float slidermin=0, float slidermax=1]],
+    [[string label="Height 02 Soft", string widget="number", string page="Height Layer 2", float slidermin=0, float slidermax=1]],
     float height_offset_02 = 0.0
-    [[string label="Height Offset", string widget="number", string page="Height Layer 2", float slidermin=-1, float slidermax=1]],
+    [[string label="Height 02 Offset", string widget="number", string page="Height Layer 2", float slidermin=-1, float slidermax=1]],
     float height_scale_02 = 1.0
-    [[string label="Height Scale", string widget="number", string page="Height Layer 2", float slidermin=0, float slidermax=2]],
+    [[string label="Height 02 Scale", string widget="number", string page="Height Layer 2", float slidermin=0, float slidermax=2]],
     float height_03 = 0.0
-    [[string label="Height", string widget="number", string page="Height Layer 3", float slidermin=0, float slidermax=1]],
+    [[string label="Height 03", string widget="number", string page="Height Layer 3", float slidermin=0, float slidermax=1]],
     float height_soft_03 = 0.0
-    [[string label="Height Soft", string widget="number", string page="Height Layer 3", float slidermin=0, float slidermax=1]],
+    [[string label="Height 03 Soft", string widget="number", string page="Height Layer 3", float slidermin=0, float slidermax=1]],
     float height_offset_03 = 0.0
-    [[string label="Height Offset", string widget="number", string page="Height Layer 3", float slidermin=-1, float slidermax=1]],
+    [[string label="Height 03 Offset", string widget="number", string page="Height Layer 3", float slidermin=-1, float slidermax=1]],
     float height_scale_03 = 1.0
-    [[string label="Height Scale", string widget="number", string page="Height Layer 3", float slidermin=0, float slidermax=2]],
+    [[string label="Height 03 Scale", string widget="number", string page="Height Layer 3", float slidermin=0, float slidermax=2]],
     output float Height_01_Blend=0,
     output float Height_02_Blend=0,
     output float Height_03_Blend=0
 )
 {
-    float total_base_height = ((base_height - 0.5) * base_height_scale + 0.5) + base_height_offset;
-    float total_height_01 = ((height_01 - 0.5) * height_scale_01 + 0.5) + height_offset_01;
-    float total_height_02 = ((height_02 - 0.5) * height_scale_02 + 0.5) + height_offset_02;
-    float total_height_03 = ((height_03 - 0.5) * height_scale_03 + 0.5) + height_offset_03;
+    // luminance_weights - acescg, rec.709, average, red, green, blue
+    vector luminance_weights[6] = { vector(0.3439664498, 0.7281660966, -0.0721325464), vector(0.21264936, 0.71516907, 0.07218152), vector(1.0/3.0), vector(1,0,0), vector(0,1,0), vector(0,0,1) };
+
+    float total_base_height = ((dot(base_height, luminance_weights[height_mode]) - 0.5) * base_height_scale + 0.5) + base_height_offset;
+    float total_height_01 = ((dot(height_01, luminance_weights[height_mode]) - 0.5) * height_scale_01 + 0.5) + height_offset_01;
+    float total_height_02 = ((dot(height_02, luminance_weights[height_mode]) - 0.5) * height_scale_02 + 0.5) + height_offset_02;
+    float total_height_03 = ((dot(height_03, luminance_weights[height_mode]) - 0.5) * height_scale_03 + 0.5) + height_offset_03;
 
     vector4 total_heights = vector4(total_base_height, total_height_01, total_height_02, total_height_03);
     vector4 deltas = vector4(0.0, height_soft_01, height_soft_02, height_soft_03);
