@@ -21,41 +21,7 @@
     SOFTWARE.
 */
 
-struct vector4 {
-    float x, y, z, w;
-};
-
-vector4 __operator__add__ (vector4 a, vector4 b) {
-    return vector4(a.x+b.x, a.y+b.y, a.z+b.z, a.w+b.w);
-}
-
-vector4 __operator__sub__ (vector4 a, vector4 b) {
-    return vector4(a.x-b.x, a.y-b.y, a.z-b.z, a.w-b.w);
-}
-
-vector4 __operator__mul__ (vector4 a, vector4 b) {
-    return vector4(a.x*b.x, a.y*b.y, a.z*b.z, a.w*b.w);
-}
-
-vector4 __operator__mul__ (vector4 a, float b) {
-    return vector4(a.x*b, a.y*b, a.z*b, a.w*b);
-}
-
-vector4 __operator__mul__ (float a, vector4 b) {
-    return vector4(a*b.x, a*b.y, a*b.z, a*b.w);
-}
-
-vector4 __operator__div__ (vector4 a, vector4 b) {
-    return vector4(a.x/b.x, a.y/b.y, a.z/b.z, a.w/b.w);
-}
-
-vector4 __operator__div__ (vector4 a, float b) {
-    return vector4(a.x/b, a.y/b, a.z/b, a.w/b);
-}
-
-vector4 clamp(vector4 a, float low, float high) {
-    return vector4(min(max(a.x,low),high), min(max(a.y,low),high), min(max(a.z,low),high), min(max(a.w,low),high));
-}
+#include <vector4.h>
 
 vector4 soft_threshold(vector4 a, vector4 threshold, vector4 delta)
 {
