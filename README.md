@@ -108,6 +108,13 @@ A collection of [Open Shading Language (OSL)](https://github.com/AcademySoftware
 
 - [Halftone.osl 📝](Halftone.osl)
 
+
+### Height Weights
+
+![](HeightWeights.jpg)
+
+- [HeightWeights.osl 📝](HeightWeights.osl)
+
 ### Hexagon
 
 ![](Hexagon.jpg)
@@ -311,6 +318,8 @@ A collection of [Open Shading Language (OSL)](https://github.com/AcademySoftware
 - [ToonStylizedPass.osl 📝](ToonStylizedPass.osl)
 
 ### Triplanar Coordinates
+
+![](TriplanarCoordinates.jpg)
 
 - [TriplanarCoordinates.osl 📝](TriplanarCoordinates.osl)
 
