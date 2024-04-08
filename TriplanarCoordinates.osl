@@ -68,11 +68,11 @@ vector triplanar_blend_weights(vector heights, float delta, vector norm)
     return blend / dot(blend, vector(1));
 }
 
-triplanar_data triplanar_coordinates(point translate, vector rotation, vector scale, vector norm, int space)
+triplanar_data triplanar_coordinates(point translate, vector rotation, vector scale, vector norm, point position, int space)
 {
     matrix projection = space == 1 ? matrix(1) : matrix("world","object");
     point translation = translate * scale;
-    point uvw = transform(projection, P) * scale;
+    point uvw = position * scale;
     triplanar_uvws uvw_planes = triplanar_uvws(
         uvw,
         uvw,
@@ -130,7 +130,7 @@ shader TriplanarCoordinates(
     int noise_seed = 12345
     [[string label="Noise Random Seed", string widget="number", string page="Noise"]],
     int space = 0
-    [[string label="Projection Space", string page="Projection", string widget="mapper", string options="Object Space:0|World Space:1"]],
+    [[string label="Projection Space", string page="Projection", string widget="mapper", string options="Object Space:0|World Space:1|Rest Space:2"]],
     point translation = 0
     [[string label="Translate", string page="Projection", float sensitivity=0.1]],
     vector rotation = 0
@@ -139,6 +139,10 @@ shader TriplanarCoordinates(
     [[string label="Uniform Scale", string page="Projection", float sensitivity=0.1, float slidermin=0, float slidermax=10]],
     vector scaling = 1
     [[string label="Scale", string page="Projection", float sensitivity=0.1]],
+    normal rest_norm = normal(0,1,0)
+    [[string label="Rest Normal", string page="Projection"]],
+    point rest_pos = 0
+    [[string label="Rest Position", string page="Projection"]],
     output point UV_Offset=0,
     output point Triplanar_UV=0,
     output vector Tangent_Out=0,
@@ -148,10 +152,11 @@ shader TriplanarCoordinates(
 )
 {
     matrix projection = space == 1 ? matrix(1) : matrix("world","object");
+    point position = space == 2 ? rest_pos : transform(projection, P);
     vector scale = 0.01 / (uniform_scaling * scaling);
-    vector norm = transform(projection, vector(Ng));
+    vector norm = space == 2 ? rest_norm : transform(projection, vector(Ng));
 
-    triplanar_data triplanar_coords = triplanar_coordinates(translation, radians(rotation), scale, norm, space);
+    triplanar_data triplanar_coords = triplanar_coordinates(translation, radians(rotation), scale, norm, position, space);
     triplanar_uvws planes = triplanar_coords.uvws;
     triplanar_normals tangents = triplanar_coords.tangents;
 
@@ -159,12 +164,12 @@ shader TriplanarCoordinates(
         texture(height_texture, planes.x.x, 1 - planes.x.y, "missingcolor", color(0.5)),
         texture(height_texture, planes.y.x, 1 - planes.y.y, "missingcolor", color(0.5)),
         texture(height_texture, planes.z.x, 1 - planes.z.y, "missingcolor", color(0.5))
-    ) * 2 - 1) + mix(0, noise("perlin", transform(projection, P) / (noise_uniform_scale * noise_scale) + noise_offset, noise_seed), noise_weight);
+    ) * 2 - 1) + mix(0, noise("perlin", transform(projection, position) / (noise_uniform_scale * noise_scale) + noise_offset, noise_seed), noise_weight);
 
     vector blend_weights = pow(triplanar_blend_weights(heights, blend * M_SQRT1_2, norm), gamma);
     blend_weights /= dot(blend_weights, vector(1));
 
-    vector rnd = noise("hash", P);
+    vector rnd = noise("hash", position);
 
     point uv = select(planes.z, select(planes.y, planes.x, rnd.x < blend_weights.x), rnd.x < (blend_weights.x + blend_weights.y));
     vector final_weights = select(vector(0,0,1), select(vector(0,1,0), vector(1,0,0), rnd.x < blend_weights.x), rnd.x < (blend_weights.x + blend_weights.y));
