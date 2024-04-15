@@ -1,0 +1,28 @@
+/*
+Screen space texture sampling for redshift.
+Handles colorspace correctly in redshift.
+This file is licensed under Apache 2.0 license
+*/
+
+shader ScreenSpaceTex
+[[  string help = "Screen Space Texture Projection Mapping",
+    string label = "Screen Space Texture Map" ]]
+(
+    string file = "",
+    string fileColorSpace = "" [[string label = "ColorSpace", string widget = "colorspace"]],
+    point scale = point(1.0, 1.0, 1.0),
+    output color outColor = 0
+)
+{
+    point screenCordinates = transform("world", "screen", P);
+    //this is a weird way to do this so I have to rescale the coordinates.
+    screenCordinates += -1;
+    screenCordinates *= 0.5;
+
+    //texture tiling
+    screenCordinates *= scale;
+    color textureSample = texture(file, screenCordinates.x, 1-screenCordinates.y);
+    //reverse baked in colorspace
+    color textureSampleRAW = transformc("ACEScg", "scene-linear Rec.709-sRGB", textureSample);
+    outColor = transformc(fileColorSpace, "ACEScg", textureSampleRAW);
+}
