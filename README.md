@@ -297,6 +297,10 @@ A collection of [Open Shading Language (OSL)](https://github.com/AcademySoftware
 - [TextureNoTile.osl 📝](TextureNoTile.osl)
 - [TextureNoTile_Example.jpg 🖼️](TextureNoTile_Example.jpg)
 
+### Texture Sample Screen Space
+
+- [TextureSampleScreenSpace.osl 📝](TextureSampleScreenSpace.osl)
+
 ### Thin Film Interference
 
 ![](ThinFilmInterference.jpg)
