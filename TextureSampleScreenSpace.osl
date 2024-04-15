@@ -1,6 +1,6 @@
 /*
-Screen space texture sampling for redshift.
-Handles colorspace correctly in redshift.
+Screen space texture sampling for Redshift.
+Handles colorspace correctly in Redshift.
 This file is licensed under Apache 2.0 license
 */
 
@@ -8,7 +8,7 @@ shader ScreenSpaceTex
 [[  string help = "Screen Space Texture Projection Mapping",
     string label = "Screen Space Texture Map" ]]
 (
-    string file = "",
+    string file = "" [[string widget = "filename", int connectable = 0]],
     string fileColorSpace = "" [[string label = "ColorSpace", string widget = "colorspace"]],
     point scale = point(1.0, 1.0, 1.0),
     output color outColor = 0
