@@ -299,7 +299,10 @@ A collection of [Open Shading Language (OSL)](https://github.com/AcademySoftware
 
 ### Texture Sample Screen Space
 
+![](TextureSampleScreenSpace.jpg)
+
 - [TextureSampleScreenSpace.osl 📝](TextureSampleScreenSpace.osl)
+- [TextureSampleScreenSpace.jpg 🖼️](TextureSampleScreenSpace.jpg)
 
 ### Thin Film Interference
 
