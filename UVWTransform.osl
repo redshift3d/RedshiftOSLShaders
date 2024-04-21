@@ -65,38 +65,7 @@ shader UVWTransform
 	vector worldScale = 1.0;
 	point Input = select(vector(u,v,0), uvwInput, isconnected(uvwInput));
 
-	//UVW = rotate(Input - -Offset, radians(Rotate), RotCenter, RotCenter + RotAxis) * Tiling / worldScale / Scale;
-
-	// Apply rotation first
-	point rotatedInput = rotate(Input - -Offset, radians(Rotate), RotCenter, RotCenter + RotAxis);
-
-	// Then apply scaling to the rotated input
-	//UVW = rotatedInput * Tiling / worldScale / Scale;
-
-	// uv coord
-    point p = point("object", u, v, 0);
-
-	// rotate about a center pivot
-	float uCenter = 0.5;
-	float vCenter = 0.5;
-    point r = transform("object", rotate( p, radians(Rotate),
-                        point(uCenter, vCenter, 0), point(uCenter, vCenter, 1)));
-	float rotU = r[0];
-    float rotV = r[1];
-
-	// offset
-	float uTranslate = (rotU - -Offset[0]);
-    float vTranslate = (rotV - -Offset[1]);
-
-	// repeats and scale
-	float uRepeats = 1;
-	float vRepeats = 1;
-	float scale = 1;
-
-	float uCoord = clamp(mod(uTranslate * uRepeats / (1.0/scale), 1), 0, 1);
-	float vCoord = clamp(mod(vTranslate * vRepeats / (1.0/scale), 1), 0, 1);
-
-	UVW = vector(uCoord, vCoord, 0);	
+	UVW = rotate(Input - -Offset, radians(Rotate), RotCenter, RotCenter + RotAxis) * Tiling / worldScale / Scale;
 
 	if (Wrap)
 	UVW -= floor(UVW);
