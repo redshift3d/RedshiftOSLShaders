@@ -11,7 +11,7 @@ shader oslTexture
 
     // Color Spaces
     // might not be needed as the filename widget has this internally
-    int changeSpace = 0
+    int changeSpace = 1
     [[	string label = "Replace Color Space",
     	string page = "Color Space Conversion",
     	string widget = "checkBox"]],
@@ -153,15 +153,15 @@ shader oslTexture
     float rotV = r[1];
 
     // offset
-	float uTranslate = (rotU - uOffset);
-    float vTranslate = (rotV - vOffset);
+	float uTranslate = (rotU - -uOffset);
+    float vTranslate = (rotV - -vOffset);
 
 	// repeats and scale
-	float uCoord = clamp(mod(uTranslate * uRepeats / scale, 1), 0, 1);
-	float vCoord = clamp(mod(vTranslate * vRepeats / scale, 1), 0, 1);
+	float uCoord = clamp(mod(uTranslate * uRepeats / (1.0/scale), 1), 0, 1);
+	float vCoord = clamp(mod(vTranslate * vRepeats / (1.0/scale), 1), 0, 1);
 
     // texture
-    color outTexture = texture( fileName, uCoord, -vCoord, "swrap", uTiling, "twrap", vTiling);
+    color outTexture = texture( fileName, uCoord, -vCoord, "swrap", uTiling, "twrap", vTiling, "colorspace", "sRGB");
     // color space conversion
 
     // invert
@@ -176,6 +176,10 @@ shader oslTexture
 
     // color space change
 	if (changeSpace == 1) {
+		// fix default input transformation
+		outTexture = transformc("ACEScg", "scene-linear Rec.709-sRGB", outTexture);
+
+		// update color space
 	    color out = transformc(fromSpace, toSpace, outTexture);
 	    color inverted = transformc(toSpace, fromSpace, outTexture);
 	    outColor = mix(out, inverted, swapInputs);

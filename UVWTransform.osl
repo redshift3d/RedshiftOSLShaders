@@ -65,7 +65,7 @@ shader UVWTransform
 	vector worldScale = 1.0;
 	point Input = select(vector(u,v,0), uvwInput, isconnected(uvwInput));
 
-	UVW = rotate(Input - Offset, radians(Rotate), RotCenter, RotCenter + RotAxis) * Tiling / worldScale / Scale;
+	UVW = rotate(Input - -Offset, radians(Rotate), RotCenter, RotCenter + RotAxis) * Tiling / worldScale / Scale;
 
 	if (Wrap)
 	UVW -= floor(UVW);
