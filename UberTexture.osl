@@ -11,17 +11,8 @@ shader oslTexture
 
     // Color Spaces
     // might not be needed as the filename widget has this internally
-    int changeSpace = 0
-    [[	string label = "Replace Color Space",
-    	string page = "Color Space Conversion",
-    	string widget = "checkBox"]],
-   string fromSpace = "" 
-    [[  string label = "Input Space", string page = "Color Space Conversion", string widget = "colorspace"]],
-    string toSpace = "" 
-    [[  string label = "Output Space", string page = "Color Space Conversion", string widget = "colorspace"]],
-    int swapInputs = 0
-    [[  string label = "Swap Spaces", string page = "Color Space Conversion", string widget = "checkBox"]],
-    
+   string fileColorSpace = "" 
+    [[  string label = "Colorspace", string page = "Color Space Conversion", string widget = "colorspace"]],
     // UVs
     string  uTiling = "default"
     [[  string widget = "popup",
@@ -175,13 +166,8 @@ shader oslTexture
     outTexture *= pow(2,exposure);
 
     // color space change
-	if (changeSpace == 1) {
-	    color out = transformc(fromSpace, toSpace, outTexture);
-	    color inverted = transformc(toSpace, fromSpace, outTexture);
-	    outColor = mix(out, inverted, swapInputs);
-	}
-	else
-	outColor = outTexture;
+	color textureSampleRAW = transformc("ACEScg", "scene-linear Rec.709-sRGB", outTexture);
+    outColor = transformc(fileColorSpace, "ACEScg", textureSampleRAW);
 
 	// string output
 	tex0 = fileName;
