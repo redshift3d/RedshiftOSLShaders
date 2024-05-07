@@ -144,12 +144,12 @@ shader oslTexture
     float rotV = r[1];
 
     // offset
-	float uTranslate = (rotU - uOffset);
-    float vTranslate = (rotV - vOffset);
+	float uTranslate = (rotU - -uOffset);
+    float vTranslate = (rotV - -vOffset);
 
 	// repeats and scale
-	float uCoord = clamp(mod(uTranslate * uRepeats / scale, 1), 0, 1);
-	float vCoord = clamp(mod(vTranslate * vRepeats / scale, 1), 0, 1);
+	float uCoord = clamp(mod(uTranslate * uRepeats / (1.0/scale), 1), 0, 1);
+	float vCoord = clamp(mod(vTranslate * vRepeats / (1.0/scale), 1), 0, 1);
 
     // texture
     color outTexture = texture( fileName, uCoord, -vCoord, "swrap", uTiling, "twrap", vTiling);
