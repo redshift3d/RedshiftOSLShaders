@@ -3,7 +3,7 @@
 // Modified: 2019-11-26
 // Modified: 2021-03-26 by Saul Espinosa for Redshift 3D
 // Copyright 2019 Autodesk Inc, All rights reserved. This file is licensed under Apache 2.0 license
-//    https://github.com/ADN-DevTech/3dsMax-OSL-Shaders/blob/master/LICENSE.txt
+// https://github.com/ADN-DevTech/3dsMax-OSL-Shaders/blob/master/LICENSE.txt
 
 color TextureFetch(string filename, point lp, output float a)
 {
@@ -23,22 +23,23 @@ shader RandomBitmaps
    string version = "2.0.0",
    string label = "Randomized Bitmaps", string page = "0 : General" ]]
 (
-	int   Layers   = 1 [[ int min=1, int max=9, int connectable=0, string page = "0 : General" ]],
+	string fileColorSpace = "" [[string label = "ColorSpace", string widget = "colorspace", string page = "General" ]],
+	int   Layers   = 1 [[ int min=1, int max=9, int connectable=0, string page = "General" ]],
 	
 	vector UVW = vector(u,v,0) [[string page = "3 : Other"]],
-	float  Scale = 1.0 [[ float min = 0, float max = 2, string label = "Overall Scale", string page = "0 : General" ]],
+	float  Scale = 1.0 [[ float min = 0, float max = 2, string label = "Overall Scale", string page = "General" ]],
 	color  Input = 0.0
-		[[ string label = "Background RGB", string page = "0 : General",
+		[[ string label = "Background RGB", string page = "General",
 		   string help="The input color on top of which everything else is put. Thia allows cascading multiple RandomBitmap on top of each other easily..." ]], 	
 	float  InputAlpha = 1.0
 		[[ float min = 0, float max = 1.0, 
-		   string label = "Background Alpha", string page = "0 : General",
+		   string label = "Background Alpha", string page = "General",
 		   string help="The input alpha on top of which everything else is put. Thia allows cascading multiple RandomBitmap on top of each other easily..." ]], 	
 #define LAYER(x) \
 	string Filename##x = ""   \
   		[[ string widget="filename",     \
 	  	   string label="File name " #x, \
-	  	   string help="The name of the bitmap to place randomly", string page = "1 : Textures" ]], 
+	  	   string help="The name of the bitmap to place randomly", string page = "Textures" ]], 
 
 	LAYER(0)
 	//====LAYER-BEGIN====
@@ -58,75 +59,75 @@ shader RandomBitmaps
 		   string help  = "By default, all files are used, but for testing purpouses, "
 		                  "one can choose to only use a few of them by setting this "
 		                  "value greater than zero.",
-		   int min = 0, int max = 10, string page = "0 : General" ]],
+		   int min = 0, int max = 10, string page = "General" ]],
 
 	int    Seed  = 39
-		[[ string help="The random seed", string page = "2 : Randomization", int min = 0, int max = 100 ]], 
+		[[ string help="The random seed", string page = "Randomization", int min = 0, int max = 100 ]], 
 	vector Probability = vector(1.0, 0.0, 0.1)
 		[[ string help="Three values: The probability a bitmap will show up, the randomness of the variation in the probability, and the scale of said randomness",
 		   float min = 0.0,
-		   float max = 1.0, string page = "2 : Randomization" ]], 
+		   float max = 1.0, string page = "Randomization" ]], 
 	vector PosRandom = vector(0.5,0.5,0.0)		
-		[[ string page = "2 : Randomization", string help="Position randomness. For large numbers you may have to turn Overlap up, but impacts performance! Note: the Z value is not used." ]], 
+		[[ string page = "Randomization", string help="Position randomness. For large numbers you may have to turn Overlap up, but impacts performance! Note: the Z value is not used." ]], 
 	vector ScaleMin = vector(1.0, 1.0, 0.0)
 		[[ string help="The scale randomness. For large scales you may have to turn Overlap up, but impacts performance! Note: the Z value is not used." ,
 		   float min = 0.0,
-		   float max = 10.0, string page = "2 : Randomization" ]], 
+		   float max = 10.0, string page = "Randomization" ]], 
 	vector ScaleMax = vector(1.0, 1.0, 0.0)
 		[[ string help="The scale randomness. For large scales you may have to turn Overlap up, but impacts performance! Note: the Z value is not used." ,
 		   float min = 0.0,
-		   float max = 10.0, string page = "2 : Randomization" ]], 	
+		   float max = 10.0, string page = "Randomization" ]], 	
 	int    UniformScale = 1 
 		[[ string widget="checkBox",
-		   string help="If enabled, U and V scales in sync with each other, if off, they scale independently", string label = "Randomize Scale Proportionally", string page = "2 : Randomization" ]], 	
+		   string help="If enabled, U and V scales in sync with each other, if off, they scale independently", string label = "Randomize Scale Proportionally", string page = "Randomization" ]], 	
 	float  PixelScale = 0.0
-		[[ float min = 0, float max = 8192, float sensitivity = 1, string page = "2 : Randomization", string help="Relates pixels to image size.<ul><li>If zero, each image is considered to be a 1.0 x 1.0 square in UV space.<li>If nonzero, maps that many pixels to a the size of 1.0, so that images are the same size w.r.t. to pixels <i>and</i> retains their aspect ratio.<br/><b>NOTE</b>: Sizes ending up larger than 1.0 will require turning up Overlap, which reduces performance!</li></ul>" ]],
+		[[ float min = 0, float max = 8192, float sensitivity = 1, string page = "Randomization", string help="Relates pixels to image size.<ul><li>If zero, each image is considered to be a 1.0 x 1.0 square in UV space.<li>If nonzero, maps that many pixels to a the size of 1.0, so that images are the same size w.r.t. to pixels <i>and</i> retains their aspect ratio.<br/><b>NOTE</b>: Sizes ending up larger than 1.0 will require turning up Overlap, which reduces performance!</li></ul>" ]],
 	float  RotMin   = 0.0
 		[[ string help="The Rotational randomness." ,
 		   float min = -180,
-		   float max =  0, string page = "2 : Randomization", float sensitivity = 1 ]],
+		   float max =  0, string page = "Randomization", float sensitivity = 1 ]],
 	float  RotMax   = 0.0
 		[[ string help="The Rotational randomness." ,
 		   float min = 0,
-		   float max =  180, string page = "2 : Randomization", float sensitivity = 1 ]],	
+		   float max =  180, string page = "Randomization", float sensitivity = 1 ]],	
 	int    RotSteps = 1
 		[[ string help="Number of 'steps' of Rotational randomness. 1 means 'no steps'.<br><br>For example, to rotate something only 0, 90, 180 and 270 degrees, set min rotation to 0, max rotation to 270, and RotSteps to 4." ,
 		   int min = 1,
-		   int max = 10, string page = "2 : Randomization" ]],	
+		   int max = 10, string page = "Randomization" ]],	
 	vector HSVMin   = vector(0.0, 1.0, 1.0)
 		[[ string help="Hue/Saturation/Value randomness. Start range of hue shift and saturation/value scaling" ,
 		   float min = -2.0,
-		   float max =  2.0, string page = "2 : Randomization" ]],	
+		   float max =  2.0, string page = "Randomization" ]],	
 	vector HSVMax   = vector(0.0, 1.0, 1.0)
 		[[ string help="Hue/Saturation/Value randomness. End range of hue shift and saturation/value scaling" ,
 		   float min = -2.0,
-		   float max =  2.0, string page = "2 : Randomization" ]],		
+		   float max =  2.0, string page = "Randomization" ]],		
 	float  AlphaMin   = 1.0
 		[[ string help="The Alpha randomness. Minimum multiplier of alpha." ,
 		   float min =  0.0,
-		   float max =  1.0, string page = "2 : Randomization" ]],	
+		   float max =  1.0, string page = "Randomization" ]],	
 	float  AlphaMax   = 1.0
 		[[ string help="The Alpha randomness. Maximum multiplier of alpha." ,
 		   float min =  0.0,
-		   float max =  1.0, string page = "2 : Randomization" ]],			
+		   float max =  1.0, string page = "Randomization" ]],			
 	float  GammaMin   = 0.0
 		[[ string help="The Gamma randomness. Minimum offset of gamma value." ,
 		   float min =  -5.0,
-		   float max =   5.0, string page = "2 : Randomization" ]],	
+		   float max =   5.0, string page = "Randomization" ]],	
 	float  GammaMax   = 0.0
 		[[ string help="The Gamma randomness. Maximum offset of gamma value." ,
 		   float min =  -5.0,
-		   float max =   5.0, string page = "2 : Randomization" ]], 			
+		   float max =   5.0, string page = "Randomization" ]], 			
 	int    Clamp    = 1 
-		[[ string widget = "checkBox", string page = "3 : Other",
+		[[ string widget = "checkBox", string page = "Other",
 		   string help = "Large color tweaks can yield colors outside of the 0-1 range. It's a good idea to clamp those colors to the 0-1 range..." ]],
-	float  ManualGamma = 2.2 
-		[[ string label="Manual Gamma", string page = "3 : Other" ]],	
+	float  ManualGamma = 1.0 
+		[[ string label="Manual Gamma", string page = "Other" ]],	
 	int    OverLap  = 1
 		[[ string help="For very large scales or position shifts, you may see cut-off textures. This means the shader may need to look further into more neighbouring cells. Increasing this reduces performance A LOT so ONLY do this if absolutely necessary!",
-		   int min=0, int max=5, string page = "3 : Other" ]],
+		   int min=0, int max=5, string page = "Other" ]],
 
-	output color Out = 0.0,
+	output color outColor = 0.0,
 	output float Alpha = 1.0,
 )
 {
@@ -146,7 +147,7 @@ shader RandomBitmaps
 	gamma = ManualGamma;
 	
 	// Start with the output being the input	
-	Out = Input;
+	color Out = Input;
 	Alpha = InputAlpha;
 	
 	// The modulo value is number of layers+1
@@ -278,6 +279,8 @@ shader RandomBitmaps
 					}
 					Alpha = 1.0 - ((1.0-Alpha)*(1.0-a));
 					Out = Out * (1.0-a) + rgb;
+					color textureSampleRAW = transformc("ACEScg", "scene-linear Rec.709-sRGB", Out);
+   				outColor = transformc(fileColorSpace, "ACEScg", textureSampleRAW);
 				}			
 			}
 		}
