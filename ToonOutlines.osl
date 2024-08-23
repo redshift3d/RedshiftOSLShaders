@@ -1,4 +1,6 @@
 // Simple stylised shading node by Benjamin Mikhaiel
+// This file is licensed under Apache 2.0 license
+
 shader ToonOutlines(
     float thickness = 0.5,  //mindex's comma
     float tracedist = 50.0,
