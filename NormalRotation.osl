@@ -6,7 +6,7 @@
 //
 // by Geoff Bolton for Redshift
 // 2022-03-07
-//
+// This file is licensed under Apache 2.0 license
 shader NormalRotation(
 	vector tex = 0 [[ string label="Texture" ]],
 	vector dir = 0 [[ string label="Normal" ]],
