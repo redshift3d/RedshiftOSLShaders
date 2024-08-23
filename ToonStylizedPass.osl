@@ -1,4 +1,5 @@
 // Simple stylised shading node by Benjamin Mikhaiel
+// This file is licensed under Apache 2.0 license
 // added basic option for point light effect 11/06/2023 (at like 3am)
 
 float frac(float x)
