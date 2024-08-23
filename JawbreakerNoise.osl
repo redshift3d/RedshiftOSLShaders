@@ -1,6 +1,7 @@
 // Created by Jerome Stephan (@jstephan828) 22/08/2021 for Redshift3D
 // Modified by Saul Espinosa 09/23/2021 to add OCIO Color Management & Page Meta Data
 // Using colors based on https://github.com/redshift3d/RedshiftOSLShaders/blob/main/NoiseColor.osl
+// This file is licensed under Apache 2.0 license
 
 #include <vector2.h>
 #define vec2 vector2
