@@ -1,3 +1,6 @@
+// This file is licensed under Apache 2.0 license
+// Created by Dominik Lingenover
+
 shader UberScalarMath (
     int operation = 0
     [[
