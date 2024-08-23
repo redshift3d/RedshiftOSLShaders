@@ -1,6 +1,7 @@
 // Created by Saul Espinosa for Redshift 3D
 // Based on  * LGVeinedMarble.osl by Shane Ambler
 // Modified 01.11.2022
+// This file is licensed under Apache 2.0 license
 
 shader MarbleVeinNoise 
 [[  string help = "Marble Vein Noise Generator",
