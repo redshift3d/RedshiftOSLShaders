@@ -1,5 +1,6 @@
 // Modified 3/03/22 by Saul Espinosa for Redshift3d
 // Psuedo Diffraction Grating Uber Shader using 3 shifted RGB Microfacets
+// This file is licensed under Apache 2.0 license
 
 shader DiffractionGrating
 [[  string help = "Psuedo Diffraction Grating Material",
