@@ -1,6 +1,7 @@
 // Author: Adrian Cruceru
 // simple texture node with extra controls
 // © Adrian Cruceru 2021
+// This file is licensed under Apache 2.0 license
 
 shader oslTexture
 [[  string label = "Uber Texture" ]]
