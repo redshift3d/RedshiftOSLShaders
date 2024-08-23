@@ -2,9 +2,8 @@
 Reflectance to IOR by Saul Espinosa for Redshift 3D
 OSL node to allow for the older rsMaterial Reflectivity style Input 
 for the RS Standard Surface. Outputs a Specular Reflection Color and IOR output.
-
+This file is licensed under Apache 2.0 license
 Last Modified : 5/16/2022
-
 */
 shader ReflectanceToIOR
 [[ string help     = "Convert Reflectivity Value to Reflection Color and IOR",
