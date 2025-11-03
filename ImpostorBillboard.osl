@@ -1,0 +1,105 @@
+// -----------------------------------------------------------------------------
+// ImpostorBillboard.osl
+// Author   : JamesDo (Truong Do Trung Hieu)
+// License  : Apache License 2.0
+// Purpose  : Impostor flipbook shader for Redshift OSL
+//
+// Usage:
+//  - Input Image  : Use texture rendered from "Lab Impostor Texture"
+//  - Ensure X/Y frames (cols/rows) match the layout used when baking the flipbook
+//  - Example: an 8x8 impostor bake → set Number of X Frames = 8, Number of Y Frames = 8
+//
+// Notes:
+//  - Designed for billboard impostors oriented by camera direction
+//  - Supports flipping pitch and interpolation mode
+//
+//
+//
+// License  : Apache License 2.0
+// Copyright 2025 JamesDo
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions
+// and limitations under the License.
+// -----------------------------------------------------------------------------
+
+
+shader rs_imposter_flipbook2D_sharp(
+    string tex           = ""  
+        [[ string widget = "filename", string label = "Input Image" ]],
+
+    int cols             = 8  
+        [[ string label = "Number of X Frames", int min = 1, int max = 10 ]],
+    int rows             = 8  
+        [[ string label = "Number of Y Frames", int min = 1, int max = 10 ]],
+
+    float bleed_fix      = 0  
+        [[ string label = "Bleed Fix", int min = 0, int max = 1 ]],
+
+    vector RayDir        = vector(0,0,1)  
+        [[ string label = "Ray Direction" ]],
+
+    int flip_pitch       = 0  
+        [[ string widget = "mapper", 
+           string label = "Flip Pitch",
+           string options = "Normal:0|Flip:1" ]],
+
+    int interp_mode      = 1  
+        [[ string widget = "mapper",
+           string label = "Interpolation",
+           string options = "Bilinear:0|Closest:1" ]],
+
+    output color Cout    = 0,
+)
+{
+    // --- Clamp & safeguard parameters ---
+    int flip_val   = clamp(flip_pitch, 0, 1);
+    int interp_val = clamp(interp_mode, 0, 1);
+    int ncols = max(cols, 1);
+    int nrows = max(rows, 1);
+
+    vector V = normalize(RayDir + vector(1e-6));  // prevent (0,0,0) normalization
+
+    // --- Determine flipbook cell from camera direction ---
+    // Yaw → column
+    float yaw   = atan2(V[0], V[2]);
+    float yaw01 = (yaw + M_PI) / (2.0 * M_PI);
+    int col     = clamp(int(floor(yaw01 * ncols)), 0, ncols - 1);
+
+    // Pitch → row
+    float pitch   = asin(clamp(V[1], -1.0, 1.0));
+    float pitch01 = (pitch + M_PI * 0.5) / M_PI;
+    int row       = clamp(int(floor(pitch01 * nrows)), 0, nrows - 1);
+
+    if (flip_val == 1) {
+        row = (nrows - 1) - row;
+    }
+
+    // --- UV mapping into flipbook cell ---
+    float fw = 1.0 / float(ncols);
+    float fh = 1.0 / float(nrows);
+
+    point st = point(u, v, 0);
+
+    float uoff = fw * bleed_fix * 0.5;
+    float voff = fh * bleed_fix * 0.5;
+
+    float su = st[0] * fw + col * fw + uoff;
+    float sv = st[1] * fh + row * fh + voff;
+
+    // --- Texture sampling ---
+    string interp = (interp_val == 1) ? "closest" : "linear";
+    float alpha = 1.0;
+    color texColor = texture(tex, su, sv, "interp", interp, "alpha", alpha);
+
+    // --- Outputs ---
+    Cout = texColor;
+}

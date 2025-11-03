@@ -133,6 +133,14 @@ A collection of [Open Shading Language (OSL)](https://github.com/AcademySoftware
 
 - [HexTileCoordinates.osl 📝](HexTileCoordinates.osl)
 
+
+### Impostor_Billboard
+
+![](ImpostorBillboard.png)
+
+- [ImpostorBillboard.osl 📝](ImpostorBillboard.osl)
+
+
 ### Iridescence
 
 ![](Iridescence.jpg)
